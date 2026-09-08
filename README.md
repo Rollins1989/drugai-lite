@@ -12,7 +12,7 @@ all computed on the fly, nothing hardcoded. Upload a file of SMILES →
 get a real funnel (validity → Lipinski filter → ML scoring → ranked
 top candidates).
 
-## Why this scope, and not the full vision
+## Why this scope?
 
 The original concept behind this project (see `docs/full-vision.md` if
 you keep the source doc) includes protein-ligand docking, GNN activity
@@ -44,21 +44,6 @@ version that survives being questioned in an interview.
 Current model performance (see `/api/health` or the in-app "Model Cards" tab):
 - Solubility: ensemble R² ≈ 0.88, RMSE ≈ 0.76 log units, holdout of 226 molecules
 - Toxicity (NR-AR): ensemble ROC-AUC ≈ 0.77, holdout of 1487 molecules
-
-## What's explicitly out of scope (roadmap, not vaporware)
-
-- Protein–ligand docking / 3D binding pose prediction — needs a docking
-  engine (AutoDock Vina / Glide) and a target structure library
-- Target-specific activity prediction via GNN — needs BindingDB/ChEMBL-scale
-  bioactivity data and GPU training time
-- Biomedical knowledge graph + literature RAG — needs a curated graph
-  database and a document ingestion pipeline
-- Molecular generation
-- Multi-tenant auth, billing, job queues, cloud infra
-
-These are the natural next milestones and are broken out that way on
-purpose — a project that's honest about its boundary reads as more
-senior than one that claims everything works.
 
 ## Architecture
 
