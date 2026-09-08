@@ -1,0 +1,7 @@
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+rdkit==2026.3.6
+scikit-learn==1.8.0
+pandas==3.0.2
+joblib==1.5.3
+python-multipart==0.0.32

@@ -1,0 +1,226 @@
+:root {
+  --bg: #0b0f14;
+  --bg-panel: #12181f;
+  --bg-card: #161e27;
+  --border: #232d38;
+  --text: #e8edf2;
+  --text-dim: #8b98a5;
+  --accent: #4dd6c4;
+  --accent-dim: #2a7d72;
+  --good: #4dd6a3;
+  --moderate: #e6b85c;
+  --poor: #e6685c;
+  --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 36px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-mark { color: var(--accent); font-size: 16px; }
+.lite { color: var(--text-dim); font-weight: 400; }
+
+nav { display: flex; gap: 6px; }
+.nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.nav-btn:hover { color: var(--text); background: var(--bg-card); }
+.nav-btn.active { color: var(--accent); border-color: var(--accent-dim); background: rgba(77,214,196,0.08); }
+
+main { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+.hero h1 { font-size: 28px; margin-bottom: 8px; font-weight: 600; }
+.hero p { color: var(--text-dim); line-height: 1.6; max-width: 640px; margin-bottom: 24px; }
+.hero code { background: var(--bg-card); padding: 2px 6px; border-radius: 4px; font-family: var(--mono); font-size: 13px; }
+
+#analyze-form, #screen-form { display: flex; gap: 10px; margin-bottom: 14px; }
+#smiles-input {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 14px;
+}
+#smiles-input:focus { outline: none; border-color: var(--accent-dim); }
+
+#screen-file {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+button[type="submit"] {
+  background: var(--accent);
+  color: #06110f;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: var(--font);
+  transition: opacity 0.15s;
+}
+button[type="submit"]:hover { opacity: 0.85; }
+
+.examples { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--text-dim); font-size: 13px; }
+.chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 6px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.chip:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+.result-panel { margin-top: 32px; }
+.hidden { display: none; }
+
+/* -------- single molecule analysis -------- */
+.mol-card {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 28px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+.mol-struct { background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 8px; }
+.mol-struct img { max-width: 100%; }
+
+.metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 18px; }
+.metric {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.metric-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.metric-value { font-size: 18px; font-weight: 600; }
+
+.badge { display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+.badge-good, .badge-high, .badge-pass { background: rgba(77,214,163,0.15); color: var(--good); }
+.badge-moderate { background: rgba(230,184,92,0.15); color: var(--moderate); }
+.badge-poor, .badge-low, .badge-fail { background: rgba(230,104,92,0.15); color: var(--poor); }
+
+.section-label { font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 8px; }
+.desc-table { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 13px; font-family: var(--mono); }
+.desc-table div { color: var(--text-dim); }
+.desc-table b { color: var(--text); font-weight: 500; }
+
+.overall-score { text-align: center; padding: 16px; background: var(--bg-card); border-radius: 10px; margin-top: 16px; }
+.overall-score .num { font-size: 34px; font-weight: 700; color: var(--accent); }
+.overall-score .lbl { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.explain-list { list-style: none; padding: 0; margin: 0; font-size: 13px; color: var(--text-dim); }
+.explain-list li { padding: 4px 0; border-bottom: 1px dashed var(--border); }
+.explain-list li:last-child { border-bottom: none; }
+
+.violations { font-size: 13px; color: var(--poor); margin-top: 6px; }
+
+/* -------- screening funnel -------- */
+.funnel { display: flex; gap: 6px; margin-bottom: 28px; flex-wrap: wrap; }
+.funnel-step {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.funnel-step .n { font-size: 24px; font-weight: 700; color: var(--accent); }
+.funnel-step .lbl { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+.candidate-list { display: flex; flex-direction: column; gap: 12px; }
+.cand-card {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+.cand-struct { background: #fff; border-radius: 6px; width: 90px; height: 74px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.cand-struct img { width: 90px; }
+.cand-smiles { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-bottom: 6px; word-break: break-all; }
+.cand-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.cand-score { text-align: right; }
+.cand-score .num { font-size: 22px; font-weight: 700; color: var(--accent); }
+.cand-score .lbl { font-size: 11px; color: var(--text-dim); }
+.rank-num { color: var(--text-dim); font-size: 12px; margin-right: 6px; }
+
+/* -------- model cards -------- */
+.model-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.model-card h3 { margin: 0 0 8px; font-size: 16px; }
+.model-card .kv { display: grid; grid-template-columns: 200px 1fr; gap: 6px 12px; font-size: 13px; margin-top: 10px; }
+.model-card .kv div:nth-child(odd) { color: var(--text-dim); }
+.scope-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.scope-box h3 { margin-top: 0; font-size: 15px; }
+.scope-box ul { margin: 8px 0; padding-left: 20px; font-size: 13px; color: var(--text-dim); line-height: 1.8; }
+.scope-box .real li::marker { color: var(--good); }
+.scope-box .roadmap li::marker { color: var(--moderate); }
+
+.loading { color: var(--text-dim); font-size: 14px; padding: 20px 0; }
+.error-box { background: rgba(230,104,92,0.1); border: 1px solid var(--poor); color: var(--poor); padding: 14px 18px; border-radius: 8px; }
+
+footer { text-align: center; color: var(--text-dim); font-size: 12px; padding: 24px; border-top: 1px solid var(--border); }
+
+@media (max-width: 640px) {
+  .mol-card { grid-template-columns: 1fr; }
+  .metric-grid { grid-template-columns: 1fr; }
+  .cand-card { grid-template-columns: 60px 1fr; }
+  .cand-score { grid-column: 1 / -1; text-align: left; }
+}
