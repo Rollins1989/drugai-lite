@@ -71,7 +71,7 @@ uvicorn main:app --reload
 # open http://localhost:8000
 ```
 
-## Deploy (pick one, ~5 minutes)
+## Deploy (pick one)
 
 **Docker (any host):**
 ```bash
