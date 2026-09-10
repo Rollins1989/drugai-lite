@@ -1,75 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DrugAI Lite — Computational Screening Workspace</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DrugAI Lite — Computational Drug Discovery</title>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark">◆</span>
-      <span>DrugAI <span class="lite">Lite</span></span>
-    </div>
-    <nav>
-      <button class="nav-btn active" data-view="analyze">Analyze</button>
-      <button class="nav-btn" data-view="screen">Screen</button>
-      <button class="nav-btn" data-view="about">Model Cards</button>
-    </nav>
-  </header>
-
-  <main>
-    <!-- ANALYZE VIEW -->
-    <section id="view-analyze" class="view active">
-      <div class="hero">
-        <h1>Molecular Analysis</h1>
-        <p>Enter a SMILES string. Descriptors, solubility, toxicity, drug-likeness and model confidence are computed live by trained ensemble models — not looked up.</p>
-        <form id="analyze-form">
-          <input id="smiles-input" type="text" placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O (aspirin)" autocomplete="off">
-          <button type="submit">Analyze</button>
-        </form>
-        <div class="examples">
-          Try:
-          <button class="chip" data-smi="CC(=O)Oc1ccccc1C(=O)O">Aspirin</button>
-          <button class="chip" data-smi="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Caffeine</button>
-          <button class="chip" data-smi="CC(C)Cc1ccc(cc1)C(C)C(=O)O">Ibuprofen</button>
-          <button class="chip" data-smi="C1=CC2=C(C=C1O)C(=O)C3=C(O2)C=C(C=C3)O">Genistein</button>
-        </div>
-      </div>
-      <div id="analyze-result" class="result-panel hidden"></div>
-    </section>
-
-    <!-- SCREEN VIEW -->
-    <section id="view-screen" class="view">
-      <div class="hero">
-        <h1>Virtual Screening</h1>
-        <p>Upload a file with one SMILES per line (or a CSV with a <code>smiles</code> column). Molecules run through a real filtering funnel: validity → Lipinski → ML scoring → ranking.</p>
-        <form id="screen-form">
-          <input id="screen-file" type="file" accept=".csv,.txt,.smi">
-          <button type="submit">Run Screening</button>
-        </form>
-        <div class="examples">
-          <button class="chip" id="sample-lib-btn">Use sample library (20 molecules)</button>
-        </div>
-      </div>
-      <div id="screen-result" class="result-panel hidden"></div>
-    </section>
-
-    <!-- ABOUT VIEW -->
-    <section id="view-about" class="view">
-      <div class="hero">
-        <h1>Model Cards</h1>
-        <p>Full transparency on what's trained, on what data, with what performance — and what's out of scope for this build.</p>
-      </div>
-      <div id="about-content" class="result-panel"></div>
-    </section>
-  </main>
-
-  <footer>
-    DrugAI Lite — a working computational screening prototype. Predictions are research aids, not clinical or regulatory determinations.
-  </footer>
-
-  <script src="/app.js"></script>
-</body>
-</html>
+<header class="topbar"><div class="brand"><span class="brand-mark">◆</span><span>DrugAI <span class="lite">Lite</span></span><span class="version">v2.0</span></div>
+<nav><button class="nav-btn active" data-view="analyze">Analyze</button><button class="nav-btn" data-view="screen">Screen</button><button class="nav-btn" data-view="about">Model Cards</button></nav></header>
+<main>
+<section id="view-analyze" class="view active"><div class="hero"><div class="eyebrow">EXPLAINABLE MOLECULAR AI</div><h1>Molecular Analysis</h1><p>From one SMILES, compute chemistry descriptors, ensemble predictions, structural alerts, chemical-space proximity, scaffold identity and an interpretable composite score.</p>
+<form id="analyze-form"><input id="smiles-input" type="text" placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O (aspirin)" autocomplete="off"><button type="submit">Analyze</button></form>
+<div class="examples">Try: <button class="chip" data-smi="CC(=O)Oc1ccccc1C(=O)O">Aspirin</button><button class="chip" data-smi="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Caffeine</button><button class="chip" data-smi="CC(C)Cc1ccc(cc1)C(C)C(=O)O">Ibuprofen</button><button class="chip" data-smi="C1=CC2=C(C=C1O)C(=O)C3=C(O2)C=C(C=C3)O">Genistein</button></div></div><div id="analyze-result" class="result-panel hidden"></div></section>
+<section id="view-screen" class="view"><div class="hero"><div class="eyebrow">BATCH VIRTUAL SCREENING</div><h1>Virtual Screening</h1><p>Upload one SMILES per line or a CSV with a <code>smiles</code> column. The funnel validates, filters, flags structural alerts, scores chemical-space proximity and ranks candidates.</p>
+<form id="screen-form"><input id="screen-file" type="file" accept=".csv,.txt,.smi"><button type="submit">Run Screening</button></form><div class="examples"><button class="chip" id="sample-lib-btn">Use sample library (20 molecules)</button></div></div><div id="screen-result" class="result-panel hidden"></div></section>
+<section id="view-about" class="view"><div class="hero"><div class="eyebrow">TRANSPARENCY</div><h1>Model Cards</h1><p>What is trained, what is deterministic chemistry, and where the system should not be over-interpreted.</p></div><div id="about-content" class="result-panel"></div></section>
+</main><footer>DrugAI Lite — computational research aid only. Predictions are not clinical, diagnostic, safety, or regulatory determinations.</footer><script src="/app.js"></script>
+</body></html>
