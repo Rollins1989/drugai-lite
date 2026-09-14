@@ -1,0 +1,21 @@
+{
+  "solubility": {
+    "rf_r2": 0.8665,
+    "gb_r2": 0.8805,
+    "ensemble_r2": 0.8781,
+    "ensemble_rmse": 0.7589,
+    "n_train": 902,
+    "n_test": 226,
+    "dataset": "ESOL (Delaney) \u2014 1128 molecules, MoleculeNet"
+  },
+  "toxicity": {
+    "rf_auc": 0.7673,
+    "gb_auc": 0.7535,
+    "ensemble_auc": 0.7693,
+    "ensemble_accuracy": 0.9691,
+    "n_train": 5945,
+    "n_test": 1487,
+    "assay": "NR-AR",
+    "dataset": "Tox21 (NR-AR nuclear receptor assay), MoleculeNet"
+  }
+}
