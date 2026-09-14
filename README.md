@@ -1,168 +1,286 @@
-# DrugAI Lite — Explainable Computational Drug-Discovery Workspace
+# DrugAI Lite
 
-DrugAI Lite is a working, deployable computational drug-discovery prototype built around **RDKit + scikit-learn + FastAPI**.
+### Explainable Computational Drug-Discovery Workspace
 
-It is deliberately scoped as an honest research/portfolio system: the ML predictions come from trained public-data models, while chemistry rules and similarity analysis are deterministic RDKit computations.
+DrugAI Lite is a machine-learning based computational drug-discovery workspace for analyzing molecules, predicting molecular properties, evaluating toxicity, and estimating target-specific biological activity.
 
-## What the upgraded v3 does
+The project combines **RDKit**, **scikit-learn**, **FastAPI**, and a lightweight web interface into a single workflow.
 
-### Single-molecule analysis
-- Canonical SMILES, molecular formula and Murcko scaffold
-- RDKit physicochemical descriptors: MolWt, LogP, TPSA, HBD/HBA, rotatable bonds, aromatic rings, QED, etc.
-- Solubility prediction from a Random Forest + Gradient Boosting ensemble
-- Tox21 NR-AR toxicity probability from a Random Forest + Gradient Boosting ensemble
-- Random-split vs Bemis–Murcko scaffold-split evaluation
-- ROC-AUC, PR-AUC, precision, recall, F1, RMSE, MAE and R² reporting
-- Deployment models trained on the scaffold split to avoid scaffold leakage
-- Target-specific IC50/pIC50 prediction pipeline using ChEMBL
-- Model-disagreement confidence signals
-- Lipinski Rule-of-Five checks
-- Veber oral-bioavailability heuristics (rotatable bonds / TPSA)
-- PAINS structural-alert screening using RDKit FilterCatalog
-- Morgan fingerprint nearest-neighbour search against the bundled ESOL/Tox21 reference chemistry
-- A simple applicability-domain signal based on nearest Tanimoto similarity
-- Descriptor-importance explanations for both trained models
-- Composite screening score combining toxicity, solubility, QED, chemical-space proximity, structural alerts and rule checks
+---
 
-### Batch virtual screening
-Upload `.smi`, `.txt`, or `.csv` files (CSV requires a `smiles` column).
+## 🚀 Features
 
-The funnel performs:
+### Molecular Analysis
+- SMILES-based molecular analysis
+- Molecular descriptors calculated with RDKit
+- Molecular fingerprints
+- Basic drug-likeness and property analysis
 
-`validity → deduplication → Lipinski → PAINS flagging → ML scoring → chemical-space signal → ranking`
+### Solubility Prediction
+- Delaney ESOL dataset
+- Random Forest and Gradient Boosting models
+- Regression evaluation using:
+  - R²
+  - RMSE
+  - MAE
+- Random split vs scaffold split comparison
 
-The API returns the top 20 candidates with structures, model outputs and screening metadata.
+### Toxicity Prediction
+- Tox21 NR-AR dataset
+- Random Forest and Gradient Boosting classifiers
+- Evaluation using:
+  - ROC-AUC
+  - PR-AUC
+  - Accuracy
+  - Precision
+  - Recall
+  - F1-score
+- Scaffold-based evaluation to reduce molecular similarity leakage
 
-## What is real vs. roadmap
+### Target-Specific Activity Prediction
+- Human EGFR activity prediction
+- Target: **CHEMBL203**
+- IC50 data sourced from ChEMBL
+- Activity represented as pIC50
+- Random Forest + Gradient Boosting ensemble
+- Scaffold-split evaluation
+- Predicted IC50 reported in nM
 
-| Component | Status |
-|---|---|
-| RDKit descriptors / structures | Real |
-| Solubility ensemble | Real, trained on ESOL/Delaney |
-| Toxicity ensemble | Real, trained on Tox21 NR-AR |
-| Model disagreement | Real RF vs GB spread |
-| Lipinski / Veber | Real deterministic rules |
-| PAINS alerts | Real RDKit FilterCatalog |
-| Morgan/Tanimoto analog search | Real against bundled reference datasets |
-| Applicability-domain signal | Real nearest-neighbour similarity heuristic |
-| Batch virtual screening | Real |
-| Protein-ligand docking | Roadmap |
-| Target-specific IC50/pIC50 baseline | Real |
-| Knowledge graph / literature RAG | Roadmap |
-| Molecular generation | Roadmap |
-| Production auth / queues / multi-tenancy | Roadmap |
+### Web Application
+- Interactive browser-based interface
+- Molecule analysis
+- Molecule screening
+- Target-specific activity prediction
+- Model evaluation information
+- FastAPI backend
 
-## Target-specific activity
+---
 
-The first target-specific baseline is **EGFR (CHEMBL203)** using ChEMBL IC50 measurements. The training script downloads human EGFR IC50 records, keeps exact measurements, aggregates repeated measurements per canonical SMILES, converts ChEMBL pChEMBL values to a single activity label, and trains Morgan-fingerprint Random Forest + Gradient Boosting regressors using a Bemis–Murcko scaffold split.
+## 🧠 Machine Learning Approach
 
-ChEMBL is a curated public bioactivity resource containing compound-target activity measurements.
+DrugAI Lite uses molecular representations generated from SMILES structures.
 
-Run:
+The workflow is:
 
-```powershell
+```text
+SMILES
+  ↓
+RDKit Molecular Representation
+  ↓
+Descriptors / Morgan Fingerprints
+  ↓
+Train / Test Split
+  ↓
+Random Forest + Gradient Boosting
+  ↓
+Model Evaluation
+  ↓
+Prediction
+````
+
+For activity and property evaluation, the project uses **Bemis-Murcko scaffold splitting** in addition to conventional random splitting.
+
+Scaffold splitting helps evaluate whether models generalize to chemically different molecular scaffolds rather than simply memorizing highly similar molecules.
+
+---
+
+## 📊 Model Evaluation
+
+### Solubility
+
+| Split    | Ensemble R² |   RMSE |    MAE |
+| -------- | ----------: | -----: | -----: |
+| Random   |      0.8781 | 0.7589 | 0.5193 |
+| Scaffold |      0.8667 | 0.8360 | 0.6053 |
+
+### Tox21 NR-AR
+
+| Split    | Ensemble ROC-AUC | PR-AUC |     F1 |
+| -------- | ---------------: | -----: | -----: |
+| Random   |           0.7692 | 0.4544 | 0.5106 |
+| Scaffold |           0.7758 | 0.4626 | 0.5135 |
+
+> Accuracy is not used as the primary toxicity metric because the dataset contains substantial class imbalance.
+
+### EGFR Activity
+
+| Metric           | Result |
+| ---------------- | -----: |
+| Molecules        |  3,970 |
+| Test molecules   |    799 |
+| Scaffold overlap |      0 |
+| Ensemble R²      | 0.6733 |
+| Ensemble RMSE    | 0.7535 |
+| Ensemble MAE     | 0.5884 |
+
+---
+
+## 🧪 Example
+
+Input:
+
+```text
+COC1=C(OCCCN2CCCCC2)C=CC(=C1)NC3=NC=CC(=C3)C#N
+```
+
+Example EGFR prediction:
+
+```text
+Target: EGFR (CHEMBL203)
+
+Predicted pIC50: 5.668
+Predicted IC50: 2148.69 nM
+
+Random Forest: 5.519
+Gradient Boosting: 5.817
+```
+
+These predictions are computational estimates and should not be interpreted as experimental measurements.
+
+---
+
+## 🛠️ Tech Stack
+
+* **Python**
+* **RDKit**
+* **scikit-learn**
+* **pandas**
+* **NumPy**
+* **joblib**
+* **FastAPI**
+* **Uvicorn**
+* **HTML / CSS / JavaScript**
+* **ChEMBL**
+* **Git / GitHub**
+
+---
+
+## 📁 Project Structure
+
+```text
+drugai/
+│
+├── backend/
+│   ├── main.py
+│   ├── train_models.py
+│   ├── train_target_activity.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   │
+│   └── static/
+│       ├── index.html
+│       ├── app.js
+│       └── style.css
+│
+├── README.md
+└── .gitignore
+```
+
+---
+
+## ⚙️ Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Rollins1989/drugai-lite.git
+cd drugai-lite
+```
+
+Install dependencies:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+---
+
+## ▶️ Run the API
+
+Navigate to the backend:
+
+```bash
 cd backend
+```
+
+Start FastAPI:
+
+```bash
+uvicorn main:app
+```
+
+The application can then be accessed through the local web server.
+
+Interactive API documentation is available through FastAPI's Swagger interface.
+
+---
+
+## 🔬 Training
+
+### Train property and toxicity models
+
+```bash
+python train_models.py
+```
+
+### Train the EGFR activity model
+
+```bash
 python train_target_activity.py --target CHEMBL203 --name egfr --max-records 5000
 ```
 
-This creates:
+The EGFR model uses target-specific IC50 measurements and evaluates performance using a scaffold-based train/test split.
 
-```text
-backend/data/targets/egfr_ic50.csv
-backend/models/targets/egfr/
-    rf.joblib
-    gb.joblib
-    scaler.joblib
-    metrics.json
+---
+
+## ⚠️ Limitations
+
+DrugAI Lite is a **research and learning project**, not a validated clinical or drug-development system.
+
+Important limitations include:
+
+* Predictions are computational estimates.
+* Model performance depends on the training data and molecular representation.
+* The EGFR model is trained for a specific target rather than being a universal target-activity predictor.
+* Predictions should not replace experimental validation.
+* Dataset bias and chemical-space limitations can affect generalization.
+* Confidence estimates are heuristic and are not experimentally calibrated.
+
+---
+
+## 🎯 Project Goals
+
+DrugAI Lite is designed to explore practical applications of machine learning in computational drug discovery, including:
+
+* Molecular representation
+* Chemical property prediction
+* Toxicity classification
+* Scaffold-aware model evaluation
+* Target-specific activity prediction
+* ML model serving through APIs
+* Building usable scientific software
+
+---
+
+## 📌 Current Version
+
+**v3**
+
+Current focus:
+
+* Scaffold-aware evaluation
+* Target-specific activity prediction
+* EGFR activity modeling
+* FastAPI prediction endpoints
+* Interactive prediction interface
+
+---
+
+## 👨‍💻 Author
+
+**Kuldeep**
+
+GitHub:
+[https://github.com/Rollins1989/drugai-lite](https://github.com/Rollins1989/drugai-lite)
+
 ```
-
-The API then exposes:
-
-- `GET /api/activity-targets` — installed target models and evaluation metrics
-- `POST /api/predict-activity` — target-specific pIC50 prediction
-
-Example:
-
-```json
-POST /api/predict-activity
-{"smiles":"COc1ccc2nc(NC3CCN(CC3)C)nc2c1", "target":"egfr"}
-```
-
-The model is a **research prediction**, not an experimental binding measurement.
-
-## Models
-
-### Solubility
-ESOL/Delaney dataset, using the bundled `data/delaney.csv`. Features are the 12 descriptors used by the training script. Two models are trained:
-- Random Forest Regressor
-- Gradient Boosting Regressor
-
-The ensemble is the arithmetic mean of both predictions.
-
-### Toxicity
-Tox21 `NR-AR` assay, using the bundled `data/tox21.csv`.
-- Random Forest Classifier
-- Gradient Boosting Classifier
-
-The ensemble is the arithmetic mean of both positive-class probabilities.
-
-Run `python train_models.py` to reproduce the model artifacts and metrics. The final deployed solubility/toxicity models are trained on the scaffold split, while `models/metrics.json` retains both random-split and scaffold-split results so the generalization gap is visible.
-
-## API
-
-- `GET /api/health` — service and model metrics
-- `GET /api/model-cards` — model transparency metadata
-- `POST /api/analyze` — single SMILES analysis
-- `POST /api/screen` — batch screening upload
-
-Example:
-
-```json
-POST /api/analyze
-{"smiles":"CC(=O)Oc1ccccc1C(=O)O"}
-```
-
-## Run locally
-
-```powershell
-cd backend
-python -m pip install -r requirements.txt
-python train_models.py
-python -m uvicorn main:app --reload
-```
-
-Open `http://127.0.0.1:8000`.
-
-## Docker
-
-```powershell
-cd backend
-docker build -t drugai-lite .
-docker run --rm -p 8000:8000 drugai-lite
-```
-
-## Project structure
-
-```text
-DrugAI-Lite/
-├── README.md
-└── backend/
-    ├── main.py
-    ├── train_models.py
-    ├── requirements.txt
-    ├── Dockerfile
-    ├── data/
-    │   ├── delaney.csv
-    │   └── tox21.csv
-    ├── models/
-    │   ├── *.joblib
-    │   └── metrics.json
-    └── static/
-        ├── index.html
-        ├── app.js
-        └── style.css
-```
-
-## Important limitation
-
-DrugAI Lite is a computational research aid. A predicted toxicity probability is **not** a clinical toxicity assessment, and the composite score is a prioritization heuristic rather than a drug-development decision.
