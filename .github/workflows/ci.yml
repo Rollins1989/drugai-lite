@@ -22,5 +22,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
-      - name: Check Python files
-        run: python -m compileall backend
+       - name: Run tests
+        working-directory: backend
+        run: python -m pytest tests
