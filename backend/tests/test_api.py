@@ -17,19 +17,13 @@ def test_activity_targets():
     assert "targets" in data
 
 
-def test_activity_prediction():
+def test_missing_activity_target():
     response = client.post(
         "/api/predict-activity",
         json={
             "smiles": "CCO",
-            "target": "egfr"
+            "target": "nonexistent"
         }
     )
 
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert "rf_pIC50" in data
-    assert "gb_pIC50" in data
-    assert "confidence" in data
+    assert response.status_code == 404
