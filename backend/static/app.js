@@ -18,7 +18,118 @@ $('#sample-lib-btn').addEventListener('click',()=>{const blob=new Blob([sample.j
 $('#screen-form').addEventListener('submit',async e=>{e.preventDefault();const input=$('#screen-file');if(!input.files.length)return;const out=$('#screen-result');out.classList.remove('hidden');out.innerHTML='<div class="loading">Running validation → Lipinski → PAINS → ML scoring → chemical-space ranking…</div>';const fd=new FormData();fd.append('file',input.files[0]);try{const r=await fetch('/api/screen',{method:'POST',body:fd});const d=await r.json();if(!r.ok){out.innerHTML=`<div class="error-box">${esc(d.detail||'Screening failed')}</div>`;return}renderScreen(d)}catch(err){out.innerHTML=`<div class="error-box">Request failed: ${esc(err)}</div>`}});
 function renderScreen(d){const f=d.funnel;const funnel=`<div class="funnel">${[['submitted','Submitted'],['valid_structures','Valid'],['unique_valid_structures','Unique'],['passed_lipinski','Lipinski'],['paints_flagged','PAINS flagged'],['scored','Scored'],['top_candidates','Top 20']].map(([k,l])=>`<div class="funnel-step"><div class="n">${f[k]}</div><div class="lbl">${l}</div></div>`).join('')}</div>`;const cards=d.candidates.map((c,i)=>`<div class="cand-card"><div class="cand-struct">${svgImg(c.structure_svg_b64)}</div><div><div class="cand-smiles"><span class="rank-num">#${i+1}</span>${esc(c.smiles)}</div><div class="cand-tags"><span class="badge ${badgeClass(c.toxicity.label)}">Tox ${c.toxicity.label}</span><span class="badge ${badgeClass(c.solubility.label)}">Sol ${c.solubility.label}</span><span class="badge ${badgeClass(c.veber.pass?'pass':'fail')}">Veber ${c.veber.pass?'PASS':'FAIL'}</span><span class="badge ${badgeClass(c.structural_alerts.pass?'clear':'flagged')}">PAINS ${c.structural_alerts.pass?'CLEAR':'FLAGGED'}</span><span class="badge ${badgeClass(c.applicability_domain.status)}">Domain ${c.applicability_domain.status}</span></div></div><div class="cand-score"><div class="num">${c.overall_score}</div><div class="lbl">score</div></div></div>`).join('');$('#screen-result').innerHTML=funnel+`<div class="candidate-list">${cards||'<div class="error-box">No candidates survived the screening funnel.</div>'}</div>`}
 
-async function loadAbout(){const out=$('#about-content');if(out.dataset.loaded)return;out.innerHTML='<div class="loading">Loading model cards…</div>';try{const d=await(await fetch('/api/model-cards')).json();const m=d.metrics;out.innerHTML=`<div class="model-card"><h3>Solubility — RF + Gradient Boosting</h3><div class="kv"><div>Dataset</div><div>${esc(m.solubility.dataset)}</div><div>Holdout</div><div>${m.solubility.n_test} molecules</div><div>Ensemble R²</div><div>${m.solubility.ensemble_r2}</div><div>Ensemble RMSE</div><div>${m.solubility.ensemble_rmse} log units</div></div></div><div class="model-card"><h3>Toxicity — Tox21 NR-AR RF + Gradient Boosting</h3><div class="kv"><div>Dataset</div><div>${esc(m.toxicity.dataset)}</div><div>Holdout</div><div>${m.toxicity.n_test} molecules</div><div>Ensemble ROC-AUC</div><div>${m.toxicity.ensemble_auc}</div><div>Accuracy</div><div>${m.toxicity.ensemble_accuracy}</div></div></div><div class="scope-box"><h3>v2 capabilities</h3><ul class="real"><li>RDKit descriptors, formula and Murcko scaffold</li><li>Lipinski + Veber rule checks</li><li>PAINS structural-alert screening</li><li>Morgan fingerprint / Tanimoto nearest-neighbour search</li><li>Reference chemical-space applicability signal</li><li>Dual-model descriptor importance explanations</li><li>Batch deduplication and richer screening funnel</li></ul><h3>Important limitations</h3><ul class="roadmap"><li>Not target-specific activity prediction</li><li>No protein-ligand docking or 3D binding prediction</li><li>No clinical toxicity determination</li><li>Nearest-neighbour similarity is an applicability signal, not proof of validity</li><li>Training/evaluation is still limited to the bundled public datasets</li></ul></div>`;out.dataset.loaded='1'}catch(e){out.innerHTML=`<div class="error-box">Could not load model cards: ${esc(e)}</div>`}}
+async function loadAbout(){
+    const out = $('#about-content');
+
+    if(out.dataset.loaded) return;
+
+    out.innerHTML = '<div class="loading">Loading model cards…</div>';
+
+    try {
+        const [cardsResponse, targetsResponse] = await Promise.all([
+            fetch('/api/model-cards'),
+            fetch('/api/activity-targets')
+        ]);
+
+        const d = await cardsResponse.json();
+        const targetsData = await targetsResponse.json();
+
+        const m = d.metrics;
+        const solubility = m.solubility;
+        const toxicity = m.toxicity;
+
+        const sol = solubility.evaluation.scaffold_split;
+        const tox = toxicity.evaluation.scaffold_split;
+
+        const egfr = (targetsData.targets || []).find(
+            target => target.name === 'egfr'
+        );
+
+        out.innerHTML = `
+            <div class="model-card">
+                <h3>Solubility — RF + Gradient Boosting</h3>
+                <div class="kv">
+                    <div>Dataset</div>
+                    <div>${esc(solubility.dataset)}</div>
+                    <div>Holdout</div>
+                    <div>${sol.n_test} molecules</div>
+                    <div>Ensemble R²</div>
+                    <div>${sol.ensemble_r2}</div>
+                    <div>Ensemble RMSE</div>
+                    <div>${sol.ensemble_rmse} log units</div>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h3>Toxicity — Tox21 NR-AR RF + Gradient Boosting</h3>
+                <div class="kv">
+                    <div>Dataset</div>
+                    <div>${esc(toxicity.dataset)}</div>
+                    <div>Holdout</div>
+                    <div>${tox.n_test} molecules</div>
+                    <div>Ensemble ROC-AUC</div>
+                    <div>${tox.ensemble_auc}</div>
+                    <div>PR-AUC</div>
+                    <div>${tox.ensemble_pr_auc}</div>
+                    <div>F1</div>
+                    <div>${tox.ensemble_f1}</div>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h3>EGFR Activity — RF + Gradient Boosting</h3>
+                <div class="kv">
+                    <div>Target</div>
+                    <div>EGFR (CHEMBL203)</div>
+                    <div>Dataset</div>
+                    <div>${egfr?.evaluation?.n_molecules ?? 3970} molecules</div>
+                    <div>Holdout</div>
+                    <div>${egfr?.evaluation?.n_test ?? 799} molecules</div>
+                    <div>Scaffold overlap</div>
+                    <div>${egfr?.evaluation?.scaffold_overlap ?? 0}</div>
+                    <div>Ensemble R²</div>
+                    <div>${egfr?.evaluation?.ensemble_r2 ?? 0.6733}</div>
+                    <div>Ensemble RMSE</div>
+                    <div>${egfr?.evaluation?.ensemble_rmse ?? 0.7535}</div>
+                </div>
+            </div>
+
+            <div class="scope-box">
+                <h3>v3 capabilities</h3>
+                <ul class="real">
+                    <li>RDKit molecular descriptors and fingerprints</li>
+                    <li>Lipinski + Veber rule checks</li>
+                    <li>PAINS structural-alert screening</li>
+                    <li>Morgan fingerprint / Tanimoto similarity search</li>
+                    <li>Reference chemical-space applicability signal</li>
+                    <li>Dual-model descriptor importance explanations</li>
+                    <li>Batch deduplication and screening funnel</li>
+                    <li>Scaffold-split model evaluation</li>
+                    <li>Target-specific EGFR activity prediction</li>
+                </ul>
+
+                <h3>Important limitations</h3>
+                <ul class="roadmap">
+                    <li>Predictions are computational estimates, not experimental measurements</li>
+                    <li>EGFR activity prediction is limited to the trained target model</li>
+                    <li>No protein-ligand docking or 3D binding prediction</li>
+                    <li>No clinical toxicity determination</li>
+                    <li>Similarity is an applicability signal, not proof of validity</li>
+                    <li>Model performance depends on the training datasets and chemical space</li>
+                </ul>
+            </div>
+        `;
+
+        out.dataset.loaded = '1';
+
+    } catch(e) {
+        out.innerHTML = `
+            <div class="error-box">
+                Could not load model cards: ${esc(e)}
+            </div>
+        `;
+    }
+}
 
 $('#activity-form').addEventListener('submit', async e => {
     e.preventDefault();
