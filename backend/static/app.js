@@ -1,0 +1,109 @@
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+function badgeClass(label){const l=(label||'').toLowerCase();if(['good','high','pass','clear'].includes(l))return'badge-good';if(['moderate'].includes(l))return'badge-moderate';if(['poor','low','fail','flagged'].includes(l))return'badge-poor';return''}
+function svgImg(b64){return `<img src="data:image/svg+xml;base64,${b64}" alt="2D molecular structure">`}
+
+document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));btn.classList.add('active');$('#view-'+btn.dataset.view).classList.add('active');if(btn.dataset.view==='about')loadAbout()}));
+
+document.querySelectorAll('.chip[data-smi]').forEach(chip=>chip.addEventListener('click',()=>{$('#smiles-input').value=chip.dataset.smi;$('#analyze-form').dispatchEvent(new Event('submit'))}));
+
+$('#analyze-form').addEventListener('submit',async e=>{e.preventDefault();const smiles=$('#smiles-input').value.trim();if(!smiles)return;const out=$('#analyze-result');out.classList.remove('hidden');out.innerHTML='<div class="loading">Running RDKit + ensemble models + structural alerts + analog search…</div>';try{const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({smiles})});const d=await r.json();if(!r.ok){out.innerHTML=`<div class="error-box">${esc(d.detail||'Could not parse this SMILES.')}</div>`;return}renderAnalysis(d)}catch(err){out.innerHTML=`<div class="error-box">Request failed: ${esc(err)}</div>`}});
+
+function metric(label,value,extra=''){return `<div class="metric"><div class="metric-label">${label}</div><div class="metric-value">${value} ${extra}</div></div>`}
+function renderAnalysis(d){const desc=d.descriptors;const id=d.identity;const domain=d.applicability_domain;const explain=[...(d.explanation.toxicity||[]).map(x=>`Toxicity · ${x.descriptor} = ${x.value} · importance ${x.importance}`),...(d.explanation.solubility||[]).map(x=>`Solubility · ${x.descriptor} = ${x.value} · importance ${x.importance}`)].slice(0,8);const descRows=Object.entries(desc).map(([k,v])=>`<div>${esc(k)}: <b>${esc(v)}</b></div>`).join('');const analogs=d.nearest_analogs.map(a=>`<div class="analog"><code>${esc(a.smiles)}</code><span>${esc(a.source)}</span><b>${a.tanimoto}</b></div>`).join('');const alerts=d.structural_alerts.alerts.length?d.structural_alerts.alerts.map(esc).join(', '):'No PAINS alerts detected';
+$('#analyze-result').innerHTML=`<div class="mol-card"><div><div class="mol-struct">${svgImg(d.structure_svg_b64)}</div><div class="score-grid"><div class="overall-score"><div class="num">${d.overall_score}</div><div class="lbl">Composite score</div></div><div class="domain-score"><div class="metric-label">Chemical-space proximity</div><b class="domain-${domain.status.toLowerCase()}">${esc(domain.status)}</b><div class="tiny">Nearest Tanimoto: ${domain.nearest_tanimoto??'—'}</div></div></div><div class="identity"><div><span>Formula</span><b>${esc(id.formula)}</b></div><div><span>Canonical SMILES</span><code>${esc(id.canonical_smiles)}</code></div><div><span>Murcko scaffold</span><code>${esc(id.murcko_scaffold_smiles||'Acyclic')}</code></div></div><div class="section-label">Rule checks</div><div class="rule-row"><span>Lipinski</span><span class="badge ${badgeClass(d.lipinski.pass?'pass':'fail')}">${d.lipinski.pass?'PASS':'FAIL'}</span><span>Veber</span><span class="badge ${badgeClass(d.veber.pass?'pass':'fail')}">${d.veber.pass?'PASS':'FAIL'}</span><span>PAINS</span><span class="badge ${badgeClass(d.structural_alerts.pass?'clear':'flagged')}">${d.structural_alerts.pass?'CLEAR':'FLAGGED'}</span></div><div class="tiny alert-text">${esc(alerts)}</div></div><div><div class="metric-grid">${metric('Predicted solubility',`${d.solubility.log_solubility_mol_per_L} log mol/L`,`<span class="badge ${badgeClass(d.solubility.label)}">${d.solubility.label}</span>`)}${metric('Solubility confidence',`<span class="badge ${badgeClass(d.solubility.confidence)}">${d.solubility.confidence}</span>`,`<span class="tiny">spread ${d.solubility.model_disagreement}</span>`)}${metric('Toxicity probability',`${(d.toxicity.toxicity_probability*100).toFixed(1)}%`,`<span class="badge ${badgeClass(d.toxicity.label)}">${d.toxicity.label}</span>`)}${metric('Toxicity confidence',`<span class="badge ${badgeClass(d.toxicity.confidence)}">${d.toxicity.confidence}</span>`,`<span class="tiny">spread ${d.toxicity.model_disagreement}</span>`)}</div><div class="section-label">Model explanation</div><ul class="explain-list">${explain.map(esc).map(x=>`<li>${x}</li>`).join('')}</ul><div class="section-label">Nearest reference analogs</div><div class="analog-list">${analogs}</div><div class="section-label">Molecular descriptors</div><div class="desc-table">${descRows}</div></div></div>`}
+
+const sample=["CC(=O)Oc1ccccc1C(=O)O","CN1C=NC2=C1C(=O)N(C(=O)N2C)C","CC(C)Cc1ccc(cc1)C(C)C(=O)O","C1=CC2=C(C=C1O)C(=O)C3=C(O2)C=C(C=C3)O","CC(=O)Nc1ccc(O)cc1","CN1CCC[C@H]1c1cccnc1","COc1cc2c(cc1OC)C(=O)C(CC1CCN(C)CC1)C2","CC1=CC(=O)C=CC1=O","O=C(O)c1ccccc1","CCN(CC)CCNC(=O)c1cc(Cl)c(N)cc1OC","Clc1ccccc1","CC(C)NCC(O)COc1cccc2ccccc12","COc1ccc2[nH]c(nc2c1)S(=O)Cc1ncc(C)c(OC)c1C","CC(C)(C)NCC(O)c1ccc(O)c(CO)c1","Oc1ccc(cc1)C1CCNCC1","CC12CCC3c4ccc(O)cc4CCC3C1CCC2O","CN(C)CCC=C1c2ccccc2CCc2ccccc21","CCCCCCCCCCCCCCCC(=O)O","OC(=O)c1ccccc1O","Nc1ccc(cc1)S(=O)(=O)Nc1nccs1","CC(C)Cc1ccccc1"];
+$('#sample-lib-btn').addEventListener('click',()=>{const blob=new Blob([sample.join('\n')],{type:'text/plain'});const file=new File([blob],'sample_library.smi');const dt=new DataTransfer();dt.items.add(file);$('#screen-file').files=dt.files;$('#screen-form').dispatchEvent(new Event('submit'))});
+$('#screen-form').addEventListener('submit',async e=>{e.preventDefault();const input=$('#screen-file');if(!input.files.length)return;const out=$('#screen-result');out.classList.remove('hidden');out.innerHTML='<div class="loading">Running validation → Lipinski → PAINS → ML scoring → chemical-space ranking…</div>';const fd=new FormData();fd.append('file',input.files[0]);try{const r=await fetch('/api/screen',{method:'POST',body:fd});const d=await r.json();if(!r.ok){out.innerHTML=`<div class="error-box">${esc(d.detail||'Screening failed')}</div>`;return}renderScreen(d)}catch(err){out.innerHTML=`<div class="error-box">Request failed: ${esc(err)}</div>`}});
+function renderScreen(d){const f=d.funnel;const funnel=`<div class="funnel">${[['submitted','Submitted'],['valid_structures','Valid'],['unique_valid_structures','Unique'],['passed_lipinski','Lipinski'],['paints_flagged','PAINS flagged'],['scored','Scored'],['top_candidates','Top 20']].map(([k,l])=>`<div class="funnel-step"><div class="n">${f[k]}</div><div class="lbl">${l}</div></div>`).join('')}</div>`;const cards=d.candidates.map((c,i)=>`<div class="cand-card"><div class="cand-struct">${svgImg(c.structure_svg_b64)}</div><div><div class="cand-smiles"><span class="rank-num">#${i+1}</span>${esc(c.smiles)}</div><div class="cand-tags"><span class="badge ${badgeClass(c.toxicity.label)}">Tox ${c.toxicity.label}</span><span class="badge ${badgeClass(c.solubility.label)}">Sol ${c.solubility.label}</span><span class="badge ${badgeClass(c.veber.pass?'pass':'fail')}">Veber ${c.veber.pass?'PASS':'FAIL'}</span><span class="badge ${badgeClass(c.structural_alerts.pass?'clear':'flagged')}">PAINS ${c.structural_alerts.pass?'CLEAR':'FLAGGED'}</span><span class="badge ${badgeClass(c.applicability_domain.status)}">Domain ${c.applicability_domain.status}</span></div></div><div class="cand-score"><div class="num">${c.overall_score}</div><div class="lbl">score</div></div></div>`).join('');$('#screen-result').innerHTML=funnel+`<div class="candidate-list">${cards||'<div class="error-box">No candidates survived the screening funnel.</div>'}</div>`}
+
+async function loadAbout(){const out=$('#about-content');if(out.dataset.loaded)return;out.innerHTML='<div class="loading">Loading model cards…</div>';try{const d=await(await fetch('/api/model-cards')).json();const m=d.metrics;out.innerHTML=`<div class="model-card"><h3>Solubility — RF + Gradient Boosting</h3><div class="kv"><div>Dataset</div><div>${esc(m.solubility.dataset)}</div><div>Holdout</div><div>${m.solubility.n_test} molecules</div><div>Ensemble R²</div><div>${m.solubility.ensemble_r2}</div><div>Ensemble RMSE</div><div>${m.solubility.ensemble_rmse} log units</div></div></div><div class="model-card"><h3>Toxicity — Tox21 NR-AR RF + Gradient Boosting</h3><div class="kv"><div>Dataset</div><div>${esc(m.toxicity.dataset)}</div><div>Holdout</div><div>${m.toxicity.n_test} molecules</div><div>Ensemble ROC-AUC</div><div>${m.toxicity.ensemble_auc}</div><div>Accuracy</div><div>${m.toxicity.ensemble_accuracy}</div></div></div><div class="scope-box"><h3>v2 capabilities</h3><ul class="real"><li>RDKit descriptors, formula and Murcko scaffold</li><li>Lipinski + Veber rule checks</li><li>PAINS structural-alert screening</li><li>Morgan fingerprint / Tanimoto nearest-neighbour search</li><li>Reference chemical-space applicability signal</li><li>Dual-model descriptor importance explanations</li><li>Batch deduplication and richer screening funnel</li></ul><h3>Important limitations</h3><ul class="roadmap"><li>Not target-specific activity prediction</li><li>No protein-ligand docking or 3D binding prediction</li><li>No clinical toxicity determination</li><li>Nearest-neighbour similarity is an applicability signal, not proof of validity</li><li>Training/evaluation is still limited to the bundled public datasets</li></ul></div>`;out.dataset.loaded='1'}catch(e){out.innerHTML=`<div class="error-box">Could not load model cards: ${esc(e)}</div>`}}
+
+$('#activity-form').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const smiles = $('#activity-smiles').value.trim();
+    const target = $('#activity-target').value;
+    const out = $('#activity-result');
+
+    if (!smiles) {
+        out.classList.remove('hidden');
+        out.innerHTML = '<div class="error-box">Please enter a SMILES string.</div>';
+        return;
+    }
+
+    out.classList.remove('hidden');
+    out.innerHTML = '<div class="loading">Running target-specific activity model…</div>';
+
+    try {
+        const r = await fetch('/api/predict-activity', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                smiles: smiles,
+                target: target
+            })
+        });
+
+        const d = await r.json();
+
+        if (!r.ok) {
+            out.innerHTML = `<div class="error-box">${esc(d.detail || 'Prediction failed.')}</div>`;
+            return;
+        }
+
+        out.innerHTML = `
+            <div class="metric-grid">
+                ${metric('Target', esc(d.target.toUpperCase()))}
+                ${metric('Predicted pIC50', d.predicted_pIC50)}
+                ${metric('Predicted IC50', `${d.predicted_IC50_nM} nM`)}
+                ${metric('RF pIC50', d.rf_pIC50)}
+                ${metric('GB pIC50', d.gb_pIC50)}
+                ${metric('Model disagreement', d.model_disagreement)}
+            </div>
+
+            <div class="section-label">Model assessment</div>
+
+            <div class="rule-row">
+                <span>Confidence</span>
+                <span class="badge ${badgeClass(d.confidence)}">
+                    ${esc(d.confidence)}
+                </span>
+
+                <span>pIC50 ≥ 6</span>
+                <span class="badge ${badgeClass(d.active_at_pIC50_6 ? 'high' : 'low')}">
+                    ${d.active_at_pIC50_6 ? 'YES' : 'NO'}
+                </span>
+            </div>
+
+            <div class="section-label">Training evaluation</div>
+
+	<div class="desc-table">
+    <div>ChEMBL target</div>
+    <b>${esc(d.training_evaluation.target_chembl_id)}</b>
+
+    <div>Dataset molecules</div>
+    <b>${d.training_evaluation.n_molecules ?? d.training_evaluation.model?.n_molecules ?? '—'}</b>
+
+    <div>Test molecules</div>
+    <b>${d.training_evaluation.n_test ?? d.training_evaluation.model?.n_test ?? '—'}</b>
+
+    <div>Scaffold overlap</div>
+    <b>${d.training_evaluation.scaffold_overlap ?? d.training_evaluation.model?.scaffold_overlap ?? '—'}</b>
+
+    <div>Ensemble R²</div>
+    <b>${d.training_evaluation.ensemble_r2 ?? d.training_evaluation.model?.ensemble_r2 ?? '—'}</b>
+
+    <div>Ensemble RMSE</div>
+    <b>${d.training_evaluation.ensemble_rmse ?? d.training_evaluation.model?.ensemble_rmse ?? '—'}</b>
+</div>
+            <div class="tiny">
+                Predictions are computational estimates, not experimental or clinical evidence.
+            </div>
+        `;
+
+    } catch (err) {
+        out.innerHTML = `<div class="error-box">Request failed: ${esc(err)}</div>`;
+    }
+});
