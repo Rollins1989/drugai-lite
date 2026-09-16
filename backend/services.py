@@ -2,15 +2,16 @@
 import csv
 import io
 
+import numpy as np
 from fastapi import HTTPException
+from rdkit import Chem
 
-from chemistry import (REFERENCE_LIBRARY, applicability_domain if False else nearest_analogs)
-from chemistry import compute_descriptors, lipinski_verdict, molecular_identity, parse_mol, structural_alerts, structure_svg_b64, veber_verdict
+from chemistry import compute_descriptors, lipinski_verdict, molecular_identity, nearest_analogs, parse_mol, structural_alerts, structure_svg_b64, veber_verdict
 from config import MAX_BATCH_MOLECULES
 from model_service import explain, predict_solubility, predict_toxicity, screening_score
 
 
-def domain_signal(mol, analogs):
+def domain_signal(analogs):
     if not analogs:
         return {"nearest_tanimoto": None, "status": "UNKNOWN", "note": "No reference molecules available."}
     sim = analogs[0]["tanimoto"]
@@ -26,7 +27,7 @@ def full_analysis(smiles: str) -> dict:
     sol, tox = predict_solubility(desc), predict_toxicity(desc)
     lip, veber, alerts = lipinski_verdict(desc), veber_verdict(mol), structural_alerts(mol)
     identity, analogs = molecular_identity(mol), nearest_analogs(mol)
-    domain = domain_signal(mol, analogs)
+    domain = domain_signal(analogs)
     score = screening_score(sol, tox, desc["QED"], alerts["pass"], lip["pass"], veber["pass"], domain["status"])
     return {"valid": True, "smiles": smiles, "identity": identity, "descriptors": desc,
             "solubility": sol, "toxicity": tox, "lipinski": lip, "veber": veber,
@@ -48,12 +49,13 @@ def parse_uploaded_smiles(content: str):
 
 
 def screen_library(raw_smiles):
-    if len(raw_smiles) > MAX_BATCH_MOLECULES: raise HTTPException(status_code=413, detail=f"Maximum batch size is {MAX_BATCH_MOLECULES:,} molecules.")
+    if len(raw_smiles) > MAX_BATCH_MOLECULES:
+        raise HTTPException(status_code=413, detail=f"Maximum batch size is {MAX_BATCH_MOLECULES:,} molecules.")
     total = len(raw_smiles); valid_results = []; invalid_count = lipinski_fail = pains_fail = duplicate_count = 0; seen = set()
     for smi in raw_smiles:
         mol = parse_mol(smi)
         if mol is None: invalid_count += 1; continue
-        canonical = __import__('rdkit').Chem.MolToSmiles(mol, canonical=True)
+        canonical = Chem.MolToSmiles(mol, canonical=True)
         if canonical in seen: duplicate_count += 1; continue
         seen.add(canonical)
         desc = compute_descriptors(mol); lip = lipinski_verdict(desc)
@@ -61,7 +63,7 @@ def screen_library(raw_smiles):
         veber, alerts = veber_verdict(mol), structural_alerts(mol)
         if not alerts["pass"]: pains_fail += 1
         sol, tox = predict_solubility(desc), predict_toxicity(desc)
-        analogs = nearest_analogs(mol, limit=1); domain = domain_signal(mol, analogs)
+        analogs = nearest_analogs(mol, limit=1); domain = domain_signal(analogs)
         score = screening_score(sol, tox, desc["QED"], alerts["pass"], lip["pass"], veber["pass"], domain["status"])
         valid_results.append({"smiles": smi, "canonical_smiles": canonical, "descriptors": desc, "solubility": sol, "toxicity": tox, "veber": veber, "structural_alerts": alerts, "applicability_domain": domain, "screening_score": score})
     valid_results.sort(key=lambda r: (-r["screening_score"]["value"], r["toxicity"]["toxicity_probability"]))
