@@ -17,6 +17,15 @@ def test_health_contract():
     assert data["status"] == "ok"
     assert "reference_library_size" in data
     assert "targets" in data
+    assert "model_version" in data
+
+
+def test_version_contract():
+    response = client.get("/api/version")
+    assert response.status_code == 200
+    data = response.json()
+    assert "application_version" in data
+    assert "model_version" in data
 
 
 def test_model_cards_document_uncertainty_score_and_metrics():
@@ -29,13 +38,11 @@ def test_model_cards_document_uncertainty_score_and_metrics():
     assert "limitations" in data
     assert "solubility" in data["metrics"]
     assert "toxicity" in data["metrics"]
+    assert "model_version" in data
 
 
 def test_analyze_returns_scientifically_named_outputs():
-    response = client.post(
-        "/api/analyze",
-        json={"smiles": "CC(=O)Oc1ccccc1C(=O)O"},
-    )
+    response = client.post("/api/analyze", json={"smiles": "CC(=O)Oc1ccccc1C(=O)O"})
     assert response.status_code == 200
     data = response.json()
     assert data["valid"] is True
@@ -51,10 +58,7 @@ def test_analyze_returns_scientifically_named_outputs():
 
 
 def test_invalid_smiles():
-    response = client.post(
-        "/api/analyze",
-        json={"smiles": "not-a-valid-smiles"},
-    )
+    response = client.post("/api/analyze", json={"smiles": "not-a-valid-smiles"})
     assert response.status_code == 400
 
 
@@ -64,23 +68,24 @@ def test_request_validation_rejects_empty_smiles():
 
 
 def test_screen_rejects_unsupported_extension():
-    response = client.post(
-        "/api/screen",
-        files={"file": ("library.pdf", b"CCO\n", "application/pdf")},
-    )
+    response = client.post("/api/screen", files={"file": ("library.pdf", b"CCO\n", "application/pdf")})
     assert response.status_code == 400
+
+
+def test_screen_accepts_small_smi_batch():
+    response = client.post("/api/screen", files={"file": ("library.smi", b"CCO\nCCC\n", "text/plain")})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["funnel"]["submitted"] == 2
+    assert "candidates" in data
 
 
 def test_activity_targets():
     response = client.get("/api/activity-targets")
     assert response.status_code == 200
-    data = response.json()
-    assert "targets" in data
+    assert "targets" in response.json()
 
 
 def test_missing_activity_target():
-    response = client.post(
-        "/api/predict-activity",
-        json={"smiles": "CCO", "target": "nonexistent"},
-    )
+    response = client.post("/api/predict-activity", json={"smiles": "CCO", "target": "nonexistent"})
     assert response.status_code == 404
