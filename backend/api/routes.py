@@ -2,7 +2,8 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
-from config import APP_VERSION
+from chemistry import REFERENCE_LIBRARY
+from config import APP_VERSION, MAX_BATCH_MOLECULES
 from model_service import METRICS, MODEL_VERSION, TARGET_MODELS, target_activity_prediction
 from schemas import ActivityRequest, MoleculeRequest
 from services import full_analysis, parse_uploaded_smiles, screen_library
@@ -13,8 +14,12 @@ router = APIRouter(prefix="/api")
 @router.get("/health")
 def health():
     return {"status": "ok", "version": APP_VERSION, "model_version": MODEL_VERSION,
-            "reference_library_size": __import__("chemistry").REFERENCE_LIBRARY.__len__(),
-            "metrics": METRICS, "targets": sorted(TARGET_MODELS)}
+            "reference_library_size": len(REFERENCE_LIBRARY), "metrics": METRICS, "targets": sorted(TARGET_MODELS)}
+
+
+@router.get("/version")
+def version():
+    return {"application_version": APP_VERSION, "model_version": MODEL_VERSION}
 
 
 @router.get("/model-cards")
@@ -47,4 +52,6 @@ async def screen(file: UploadFile = File(...)):
     if not file.filename or not file.filename.lower().endswith((".csv", ".txt", ".smi")):
         raise HTTPException(status_code=400, detail="Upload a .csv, .txt, or .smi file.")
     content = (await file.read()).decode(errors="ignore")
+    if len(content.encode()) > 10_000_000:
+        raise HTTPException(status_code=413, detail="Uploaded file is too large (10 MB maximum).")
     return JSONResponse(screen_library(parse_uploaded_smiles(content)))
