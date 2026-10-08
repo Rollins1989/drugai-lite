@@ -1,6 +1,7 @@
 """Versioned FastAPI API for DrugAI Lite."""
 from __future__ import annotations
-import csv, io
+import csv
+import io
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response
 from chemistry import REFERENCE_LIBRARY, set_custom_reference_library
