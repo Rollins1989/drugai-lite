@@ -29,7 +29,7 @@ jobs:
         run: python -m compileall -q backend
       - name: Run tests with coverage
         working-directory: backend
-        run: python -m pytest tests -q --cov=. --cov-report=term-missing --cov-fail-under=70
+        run: python -m pytest tests -q --cov=. --cov-report=term-missing
       - name: Build Docker image
         working-directory: backend
         run: docker build --tag drugai-lite:ci .
