@@ -6,5 +6,17 @@ __pycache__/
 .venv/
 venv/
 
-backend/data/
-backend/models/
+# Local/raw training data; keep deployment model artifacts reproducible and explicit.
+backend/data/*
+!backend/data/.gitkeep
+
+# Generated evaluation plots/reports are not deployment artifacts.
+backend/models/evaluation/
+
+# Keep the small/required deployment bundle tracked.
+!backend/models/
+!backend/models/*.joblib
+!backend/models/*.json
+!backend/models/targets/
+!backend/models/targets/**/*.joblib
+!backend/models/targets/**/*.json
