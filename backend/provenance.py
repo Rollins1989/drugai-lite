@@ -1,6 +1,6 @@
 """Runtime/model provenance and structured request metadata."""
 from __future__ import annotations
-import hashlib, json, platform, sys
+import hashlib, platform
 from datetime import datetime, timezone
 import rdkit, sklearn
 
