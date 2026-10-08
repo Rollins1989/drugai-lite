@@ -90,3 +90,15 @@ def test_async_screen_rejects_oversized_batch():
     payload=("CCO\n"* (MAX_BATCH_MOLECULES+1)).encode()
     r=client.post("/api/screen/jobs",files={"file":("large.smi",payload,"text/plain")})
     assert r.status_code==413
+
+
+def test_security_headers():
+    r=client.get("/api/health")
+    assert r.headers["x-content-type-options"]=="nosniff"
+    assert r.headers["x-frame-options"]=="DENY"
+    assert "x-request-id" in r.headers
+    assert "x-process-time-ms" in r.headers
+
+def test_async_screen_rejects_unsupported_file_type():
+    r=client.post("/api/screen/jobs",files={"file":("input.exe",b"CCO\n","application/octet-stream")})
+    assert r.status_code==400
