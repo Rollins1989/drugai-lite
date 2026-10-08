@@ -17,14 +17,26 @@ OBJECTIVES = {
 }
 
 def _values(row):
+    toxicity = row.get("toxicity_probability")
+    if toxicity is None:
+        toxicity = row.get("toxicity", {}).get("toxicity_probability", 1.0) if isinstance(row.get("toxicity"), dict) else row.get("toxicity", 1.0)
+    solubility = row.get("solubility")
+    if isinstance(solubility, dict):
+        solubility = solubility.get("log_solubility_mol_per_L", -99)
+    else:
+        solubility = row.get("log_solubility_mol_per_L", -99) if solubility is None else solubility
+    descriptors = row.get("descriptors", {})
     activity = row.get("activity", row.get("predicted_pIC50"))
+    qed = row.get("qed", descriptors.get("QED", 0.0))
+    mw = row.get("mw", descriptors.get("MolWt", 9999))
+    logp = row.get("logp", descriptors.get("LogP", 9999))
     return {
         "activity": float(activity) if activity is not None else None,
-        "toxicity": float(row.get("toxicity_probability", row.get("toxicity", {}).get("toxicity_probability", 1.0) if isinstance(row.get("toxicity"), dict) else row.get("toxicity", 1.0))),
-        "solubility": float(row.get("solubility", row.get("log_solubility_mol_per_L", -99))),
-        "qed": float(row.get("qed", 0.0)),
-        "mw": float(row.get("mw", row.get("MolWt", 9999))),
-        "logp": float(row.get("logp", row.get("LogP", 9999))),
+        "toxicity": float(toxicity),
+        "solubility": float(solubility),
+        "qed": float(qed),
+        "mw": float(mw),
+        "logp": float(logp),
     }
 
 def pareto_front(rows: list[dict], objectives: list[str]) -> list[dict]:
