@@ -4,13 +4,13 @@ import uuid
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest\n\ndef unique_operation_id(route):\n    methods=sorted(getattr(route,"methods",[]) or [])\n    method="_".join(m.lower() for m in methods)\n    return f"{method}_{route.path_format.strip("/").replace("/", "_").replace("{", "").replace("}", "")}"
 from api.routes import router
 from config import APP_VERSION, STATIC_DIR
 
 REQUEST_COUNT=Counter("drugai_http_requests_total","HTTP requests",["method","path","status"])
 REQUEST_LATENCY=Histogram("drugai_http_request_duration_seconds","HTTP request latency",["method","path"])
-app=FastAPI(title="DrugAI Lite",version=APP_VERSION,description="Open-source computational drug-discovery workspace for molecular profiling, target activity prediction and virtual screening.")
+app=FastAPI(title="DrugAI Lite",version=APP_VERSION,generate_unique_id_function=unique_operation_id,description="Open-source computational drug-discovery workspace for molecular profiling, target activity prediction and virtual screening.")
 app.include_router(router,prefix="/api/v1")
 # Backward-compatible legacy surface. New integrations should use /api/v1.
 app.include_router(router,prefix="/api")
