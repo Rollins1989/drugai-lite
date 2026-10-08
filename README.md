@@ -65,25 +65,27 @@ The API exposes interactive OpenAPI documentation at `http://127.0.0.1:8000/docs
 | Endpoint | Purpose |
 |---|---|
 | POST /api/v1/analyze | Single-molecule analysis |
-| POST /api/compare | Compare two molecules |
-| POST /api/predict-activity | Target-specific activity |
-| POST /api/screen | Synchronous library screening |
-| POST /api/screen/jobs | Asynchronous screening |
-| GET /api/screen/jobs/{job_id} | Screening job status |
-| POST /api/chemical-space | PCA + clustering |
-| POST /api/pareto | Multi-objective Pareto ranking |
-| POST /api/dataset/quality | Dataset QC |
-| POST /api/references/upload | Custom reference library |
-| POST /api/screen/export.csv | Ranked CSV export |
-| POST /api/analyze/report.pdf | Molecular PDF report |
-| GET /api/v1/model-cards | Model metadata and limitations |\n| GET /api/v1/evaluation | Evaluation metadata and validation hierarchy |\n| GET /api/v1/metrics | Prometheus-compatible operational metrics |
+| POST /api/v1/compare | Compare two molecules |
+| POST /api/v1/predict-activity | Target-specific activity |
+| POST /api/v1/screen | Synchronous library screening |
+| POST /api/v1/screen/jobs | Asynchronous screening |
+| GET /api/v1/screen/jobs/{job_id} | Screening job status |
+| POST /api/v1/chemical-space | PCA + clustering |
+| POST /api/v1/pareto | Multi-objective Pareto ranking |
+| POST /api/v1/dataset/quality | Dataset QC |
+| POST /api/v1/references/upload | Custom reference library |
+| POST /api/v1/screen/export.csv | Ranked CSV export |
+| POST /api/v1/analyze/report.pdf | Molecular PDF report |
+| GET /api/v1/model-cards | Model metadata and limitations |
+| GET /api/v1/evaluation | Evaluation metadata and validation hierarchy |
+| GET /api/v1/metrics | Prometheus-compatible operational metrics |
 | GET /api/v1/version | Runtime/model provenance |
 | GET /api/v1/health | Health information |
 
 Example:
 
 ~~~bash
-curl -X POST http://127.0.0.1:8000/api/analyze \
+curl -X POST http://127.0.0.1:8000/api/v1/analyze \
   -H "Content-Type: application/json" \
   -d '{"smiles":"CC(=O)Oc1ccccc1C(=O)O"}'
 ~~~
