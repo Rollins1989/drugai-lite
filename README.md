@@ -1,359 +1,185 @@
 # DrugAI Lite
 
-### Explainable ML Platform for Computational Drug Discovery
+### Open-source computational drug-discovery workspace
 
-DrugAI Lite is a research and portfolio prototype that combines **cheminformatics, machine learning, and scientific software engineering** into an interactive molecular-analysis and virtual-screening workspace.
+DrugAI Lite combines **RDKit cheminformatics, machine learning, target-specific activity prediction, chemical-space analysis and virtual screening** behind a FastAPI API and browser workspace.
 
-Given a molecule as a SMILES string, the platform can calculate molecular properties, run ensemble ML predictions, identify structural alerts, search for similar reference molecules, inspect the molecule's scaffold, and expose the results through a **FastAPI backend and browser interface**.
-
-> **Research prototype:** DrugAI Lite is not a clinical, diagnostic, safety, or regulatory system. All ML outputs are computational estimates and require experimental validation.
+> **Scientific boundary:** DrugAI Lite is a computational research aid. Predictions, prioritization scores, applicability-domain signals and uncertainty diagnostics are not clinical, regulatory, safety, efficacy or experimental evidence.
 
 [![CI](https://github.com/Rollins1989/drugai-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/Rollins1989/drugai-lite/actions/workflows/ci.yml)
 
----
+## Feature set
 
-## What the project demonstrates
-
-| Area | Implementation |
-|---|---|
-| Cheminformatics | RDKit, molecular descriptors, Morgan fingerprints, Murcko scaffolds |
-| Molecular property prediction | ESOL/Delaney solubility regression |
-| Toxicology ML | Tox21 NR-AR classification |
-| Target activity | EGFR / CHEMBL203 IC50 → pIC50 prediction |
-| Model evaluation | Random split + Bemis-Murcko scaffold split |
-| Explainability | Descriptor feature importance + model disagreement |
-| Chemical-space analysis | Morgan/Tanimoto nearest-neighbour search |
-| Structural filters | Lipinski, Veber, PAINS |
-| ML serving | FastAPI + Pydantic |
-| Frontend | HTML, CSS, JavaScript |
-| Testing | pytest + service/API integration tests |
-| Packaging/deployment | Docker + runtime healthcheck |
-| CI | GitHub Actions with Docker smoke test |
-| Architecture | Layered API, chemistry, model, service, and schema modules |
-
----
-
-## Core workflow
-
-```text
-                         ┌──────────────────────┐
-                         │   SMILES molecule    │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │      RDKit parse     │
-                         └──────────┬───────────┘
-                                    │
-                  ┌─────────────────┼─────────────────┐
-                  │                 │                 │
-                  ▼                 ▼                 ▼
-           Descriptors         Fingerprints       Structure
-                  │                 │                 │
-          ┌───────┴───────┐         │          ┌──────┴──────┐
-          ▼               ▼         ▼          ▼             ▼
-     Solubility       Toxicity   Analog      Scaffold    Alerts/rules
-       ensemble        ensemble   search     analysis    Lipinski/Veber/PAINS
-          │               │         │            │             │
-          └───────────────┴─────────┴────────────┴─────────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │   Screening results  │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │     FastAPI API       │
-                         │   + browser frontend  │
-                         └──────────────────────┘
-```
-
-A rendered architecture diagram is also available at [`docs/architecture.svg`](docs/architecture.svg).
-
----
-
-## Features
-
-### 1. Molecular analysis
-
-Enter a SMILES string and obtain:
-
-- Molecular formula and canonical SMILES
-- Molecular weight and exact molecular weight
-- LogP and TPSA
-- Hydrogen-bond donors/acceptors
-- Rotatable bonds and aromatic rings
-- Fraction CSP3 and heteroatom count
-- QED and other molecular descriptors
+### Molecular intelligence
+- Canonical SMILES, molecular formula, exact mass and 2D structure
+- MW, LogP, TPSA, HBD/HBA, rotatable bonds, rings, CSP3 and QED
 - Murcko scaffold
-- 2D molecular structure rendering
+- Lipinski and Veber checks
+- PAINS structural alerts
 
-### 2. Solubility prediction
+### ML prediction
+- ESOL/Delaney solubility regression
+- Tox21 NR-AR classification
+- EGFR/CHEMBL203 target activity prediction
+- Random Forest + Gradient Boosting ensembles
+- Random and Bemis–Murcko scaffold evaluation
+- RF/GB model-agreement diagnostics
+- Empirical RF-tree spread diagnostics
+- Global feature importance
+- Local one-feature sensitivity diagnostics
 
-The ESOL/Delaney dataset is used to train regression models from RDKit molecular descriptors.
+### Chemical-space intelligence
+- Morgan fingerprints and Tanimoto nearest-neighbour search
+- PCA chemical-space projection
+- Agglomerative clustering
+- Custom reference-library upload
+- Dataset quality reporting
+- Multi-objective Pareto ranking
 
-Models:
+### Virtual screening
+- CSV / TXT / SMI ingestion
+- CSV metadata preservation
+- Structure validation and canonicalization
+- Duplicate detection
+- Lipinski / Veber / PAINS filtering
+- Optional target-aware pIC50 prediction
+- Candidate prioritization
+- Asynchronous screening jobs
+- Ranked CSV export
 
-- Random Forest Regressor
-- Gradient Boosting Regressor
-- Ensemble mean prediction
-
-Metrics:
-
-- R²
-- RMSE
-- MAE
-
-Both conventional random splitting and scaffold-based evaluation are reported.
-
-### 3. Toxicity prediction
-
-The project uses the **Tox21 NR-AR assay** as a binary classification task.
-
-Models:
-
-- Random Forest Classifier
-- Gradient Boosting Classifier
-- Ensemble probability
-
-Reported metrics include ROC-AUC, PR-AUC, Accuracy, Precision, Recall, and F1. ROC-AUC and PR-AUC are emphasized because class imbalance makes accuracy alone insufficient.
-
-### 4. Target-specific activity prediction
-
-DrugAI Lite includes a target-specific activity workflow for **EGFR — CHEMBL203**.
-
-The training pipeline is:
-
-```text
-ChEMBL activity records → IC50 filtering → human-target filtering
-→ molecule-level aggregation → Morgan fingerprints
-→ Bemis-Murcko scaffold split → RF + GB
-→ pIC50 prediction → IC50 in nM
-```
-
-### 5. Virtual screening
-
-Upload `.csv` with a `smiles` column, `.txt`, or `.smi` containing one SMILES per line. The screening API validates, canonicalizes, deduplicates, filters, predicts, compares chemical space, and returns a ranked top-20 candidate list.
-
-Batch limit: **5,000 molecules**. HTTP upload limit: **10 MB**.
-
-### 6. Engineering architecture
-
-Phase 4 separates the application into focused layers rather than keeping all behavior in one FastAPI module:
-
-```text
-backend/
-├── api/routes.py       # HTTP endpoints
-├── chemistry.py        # RDKit operations
-├── config.py           # paths and runtime configuration
-├── model_service.py    # model loading and inference
-├── services.py         # workflow orchestration
-├── schemas.py          # Pydantic request models
-└── main.py             # application assembly
-```
-
-See [`docs/phase-4-engineering.md`](docs/phase-4-engineering.md) for the architecture and testing rationale.
-
----
-
-## Model evaluation
-
-### Solubility
-
-| Split | Ensemble R² | RMSE | MAE |
-|---|---:|---:|---:|
-| Random | 0.8781 | 0.7589 | 0.5193 |
-| Scaffold | 0.8667 | 0.8360 | 0.6053 |
-
-### Tox21 NR-AR
-
-| Split | Ensemble ROC-AUC | PR-AUC | F1 |
-|---|---:|---:|---:|
-| Random | 0.7692 | 0.4544 | 0.5106 |
-| Scaffold | 0.7758 | 0.4626 | 0.5135 |
-
-### EGFR / CHEMBL203
-
-| Metric | Result |
-|---|---:|
-| Molecules | 3,970 |
-| Test molecules | 799 |
-| Scaffold overlap | 0 |
-| Ensemble R² | 0.6733 |
-| Ensemble RMSE | 0.7535 |
-| Ensemble MAE | 0.5884 |
-
-These are bundled evaluation results; they are not evidence of clinical or prospective experimental efficacy. Phase 3 training also generates baseline and diagnostic artifacts when the training script is run.
-
----
+### Scientific reporting and engineering
+- Runtime/model provenance
+- Request IDs and processing latency
+- Model cards
+- Molecular PDF reports
+- FastAPI + Pydantic
+- Docker + healthcheck
+- pytest + coverage + Ruff
+- GitHub Actions + CodeQL + Dependabot
 
 ## API
 
-Run locally and open FastAPI's interactive documentation at `http://127.0.0.1:8000/docs`.
+The API exposes interactive OpenAPI documentation at `http://127.0.0.1:8000/docs`.
 
-```bash
-curl http://127.0.0.1:8000/api/health
-curl http://127.0.0.1:8000/api/version
-curl http://127.0.0.1:8000/api/model-cards
-curl http://127.0.0.1:8000/api/activity-targets
-```
+| Endpoint | Purpose |
+|---|---|
+| POST /api/analyze | Single-molecule analysis |
+| POST /api/compare | Compare two molecules |
+| POST /api/predict-activity | Target-specific activity |
+| POST /api/screen | Synchronous library screening |
+| POST /api/screen/jobs | Asynchronous screening |
+| GET /api/screen/jobs/{job_id} | Screening job status |
+| POST /api/chemical-space | PCA + clustering |
+| POST /api/pareto | Multi-objective Pareto ranking |
+| POST /api/dataset/quality | Dataset QC |
+| POST /api/references/upload | Custom reference library |
+| POST /api/screen/export.csv | Ranked CSV export |
+| POST /api/analyze/report.pdf | Molecular PDF report |
+| GET /api/model-cards | Model metadata and limitations |
+| GET /api/version | Runtime/model provenance |
+| GET /api/health | Health information |
 
-Analyze a molecule:
+Example:
 
-```bash
+~~~bash
 curl -X POST http://127.0.0.1:8000/api/analyze \
   -H "Content-Type: application/json" \
   -d '{"smiles":"CC(=O)Oc1ccccc1C(=O)O"}'
-```
+~~~
 
-Batch screen:
+## Screening philosophy
 
-```bash
-curl -X POST http://127.0.0.1:8000/api/screen -F "file=@molecules.csv"
-```
+The prioritization number is deliberately labeled a **heuristic candidate-prioritization score**. It combines modeled toxicity, solubility category, QED, reference-space proximity, PAINS status and drug-likeness rules.
 
----
+It is **not** a validated efficacy score, clinical risk score, binding-affinity score, developability guarantee, or replacement for experimental testing.
 
-## Web interface
+For target-enabled screening, the Pareto layer can consider activity, toxicity, solubility and QED simultaneously rather than hiding every objective behind one number.
 
-The browser interface is served by FastAPI and includes:
+## Uncertainty and applicability domain
 
-- **Analyze** — single-molecule chemistry and ML analysis
-- **Screen** — batch virtual screening
-- **Target Activity** — target-specific prediction
-- **Model Cards** — model transparency and evaluation information
+DrugAI Lite distinguishes diagnostic signals from calibrated uncertainty.
 
-Frontend source: [`backend/static/`](backend/static/).
+- **Model agreement:** RF vs Gradient Boosting disagreement.
+- **Empirical ensemble spread:** RF-tree 10th–90th percentile spread.
+- **Applicability-domain signal:** nearest-neighbour Morgan/Tanimoto proximity to the selected reference space.
 
----
+None of these should be interpreted as a calibrated probability of correctness.
 
-## Project structure
+## Evaluation
 
-```text
-drugai-lite/
-├── .github/workflows/ci.yml
-├── backend/
-│   ├── api/
-│   │   ├── __init__.py
-│   │   └── routes.py
-│   ├── data/
-│   │   ├── delaney.csv
-│   │   ├── tox21.csv
-│   │   └── targets/
-│   ├── models/
-│   │   ├── solubility_*.joblib
-│   │   ├── toxicity_*.joblib
-│   │   ├── metrics.json
-│   │   └── targets/
-│   ├── static/
-│   ├── tests/
-│   │   ├── test_api.py
-│   │   └── test_services.py
-│   ├── chemistry.py
-│   ├── config.py
-│   ├── model_service.py
-│   ├── schemas.py
-│   ├── services.py
-│   ├── main.py
-│   ├── train_models.py
-│   ├── train_target_activity.py
-│   ├── requirements.txt
-│   └── Dockerfile
-├── docs/
-│   ├── architecture.svg
-│   ├── model-evaluation.md
-│   └── phase-4-engineering.md
-├── .gitignore
-├── LICENSE
-└── README.md
-```
+The repository reports internal benchmark and scaffold-split evaluation for its bundled models. Target training records ChEMBL retrieval metadata, hashes, split configuration and model metadata.
 
----
+The project does **not** claim prospective experimental validation.
+
+Recommended validation hierarchy:
+1. Random benchmark split
+2. Scaffold-disjoint split
+3. Temporal split where timestamps are available
+4. Independent external dataset
+5. Prospective experimental validation
 
 ## Installation
 
-```bash
+~~~bash
 git clone https://github.com/Rollins1989/drugai-lite.git
 cd drugai-lite
 python -m venv .venv
-```
+~~~
 
 Windows:
-
-```bash
-.venv\Scripts\activate
-```
+~~~text
+.venv\\Scripts\\activate
+~~~
 
 macOS/Linux:
-
-```bash
+~~~bash
 source .venv/bin/activate
-```
+~~~
 
-Install backend dependencies:
-
-```bash
+Install and run:
+~~~bash
 cd backend
 python -m pip install -r requirements.txt
-```
-
-Start the application:
-
-```bash
 uvicorn main:app --reload
-```
+~~~
+
+Open `http://127.0.0.1:8000`.
 
 ### Docker
-
-```bash
+~~~bash
 cd backend
 docker build -t drugai-lite .
 docker run --rm -p 8000:8000 drugai-lite
-```
+~~~
 
-The container exposes a healthcheck at `/api/health`.
+## Training
 
----
-
-## Training and evaluation
-
-Solubility/toxicity training and diagnostics:
-
-```bash
+Solubility and toxicity:
+~~~bash
 cd backend
 python train_models.py
-```
+~~~
 
-Target-specific EGFR training:
-
-```bash
+Target activity:
+~~~bash
 python train_target_activity.py --target CHEMBL203 --name egfr
-```
+~~~
 
-Phase 3 evaluation details are documented in [`docs/phase-3-evaluation.md`](docs/phase-3-evaluation.md).
-
----
+The target pipeline records ChEMBL retrieval/query metadata and dataset hashes so refreshed training runs are auditable.
 
 ## Scientific limitations
-
-- No external validation or prospective experimental validation is claimed.
-- Ensemble disagreement is a model-agreement signal, not calibrated predictive confidence.
-- The screening score is a hand-weighted heuristic prioritization score, not a validated efficacy/safety/developability endpoint.
-- Applicability-domain output is a nearest-neighbour chemical-space proximity signal, not a formal statistical applicability-domain guarantee.
-- Tree feature importance is global model-level importance, not causal per-molecule attribution.
-- Tox21 NR-AR represents one assay endpoint and should not be generalized to overall human toxicity.
-- ChEMBL target activity measurements can contain assay and experimental heterogeneity.
-- All predictions are intended for research/hypothesis generation and require experimental validation.
-
----
-
-## License
-
-MIT License. See [`LICENSE`](LICENSE).
+- Tox21 NR-AR is one assay endpoint and must not be generalized to overall human toxicity.
+- pIC50 predictions are computational estimates, not experimental activity measurements.
+- RF/GB agreement and RF-tree spread are diagnostic signals, not calibrated confidence intervals.
+- Nearest-neighbour chemical-space proximity is not a formal statistical applicability-domain guarantee.
+- Global feature importance and local perturbation sensitivity are explanatory diagnostics, not causal attribution.
+- The candidate-prioritization score is hand-weighted and unvalidated.
+- ChEMBL measurements can contain assay and experimental heterogeneity.
+- Models can fail outside their training distribution.
+- Experimental validation remains necessary for biological conclusions.
 
 ## Version
+**Application: 4.0.0**
 
-Application architecture: **3.0.0 (Phase 4)**.
-
-Model artifacts are versioned separately through `backend/models/model_version.json` when generated by the training pipeline.
+## License
+MIT License. See LICENSE.

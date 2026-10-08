@@ -1,7 +1,6 @@
 """RDKit chemistry utilities used by the API and screening services."""
 import base64
 import csv
-from pathlib import Path
 
 from rdkit import Chem, DataStructs
 from rdkit.Chem import Crippen, Descriptors, Lipinski, QED, rdMolDescriptors
@@ -114,10 +113,22 @@ def load_reference_library():
     return refs
 
 REFERENCE_LIBRARY = load_reference_library()
+CUSTOM_REFERENCE_LIBRARY = []
+
+def set_custom_reference_library(smiles_rows):
+    global CUSTOM_REFERENCE_LIBRARY
+    refs = []
+    for row in smiles_rows:
+        smi = str(row.get("smiles", "") if isinstance(row, dict) else row).strip()
+        mol = parse_mol(smi)
+        if mol is not None:
+            refs.append((smi, "custom", fingerprint(mol)))
+    CUSTOM_REFERENCE_LIBRARY = refs
+    return len(refs)
 
 
 def nearest_analogs(mol, limit=5):
     fp = fingerprint(mol)
-    scored = [(DataStructs.TanimotoSimilarity(fp, ref_fp), smi, source) for smi, source, ref_fp in REFERENCE_LIBRARY]
+    scored = [(DataStructs.TanimotoSimilarity(fp, ref_fp), smi, source) for smi, source, ref_fp in (CUSTOM_REFERENCE_LIBRARY + REFERENCE_LIBRARY)]
     scored.sort(reverse=True)
     return [{"smiles": smi, "source": source, "tanimoto": round(score, 3)} for score, smi, source in scored[:limit]]
