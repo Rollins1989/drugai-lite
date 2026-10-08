@@ -1,7 +1,6 @@
 """RDKit chemistry utilities used by the API and screening services."""
 import base64
 import csv
-from pathlib import Path
 
 from rdkit import Chem, DataStructs
 from rdkit.Chem import Crippen, Descriptors, Lipinski, QED, rdMolDescriptors
