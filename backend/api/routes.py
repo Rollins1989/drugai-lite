@@ -1,6 +1,6 @@
 """Versioned FastAPI API for DrugAI Lite."""
 from __future__ import annotations
-import csv, io, uuid
+import csv, io
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response
 from chemistry import REFERENCE_LIBRARY, set_custom_reference_library
@@ -8,7 +8,7 @@ from config import APP_VERSION, MAX_UPLOAD_BYTES
 from model_service import METRICS, MODEL_VERSION, TARGET_MODELS
 from schemas import ActivityRequest, ChemicalSpaceRequest, CompareRequest, MoleculeRequest, ParetoRequest
 from services import full_analysis, parse_uploaded_records, screen_records, start_screen_job, get_screen_job
-from analytics import chemical_space, dataset_quality, pairwise_similarity, pareto_rank
+from analytics import chemical_space, dataset_quality, pairwise_similarity
 from provenance import runtime_provenance
 from reports import molecule_pdf
 
