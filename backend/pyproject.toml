@@ -12,5 +12,8 @@ requires-python = ">=3.12,<3.14"
 line-length = 120
 target-version = "py312"
 
+[tool.ruff.lint]
+select = ["E4", "E9", "F"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
