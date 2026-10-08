@@ -113,11 +113,11 @@ def load_reference_library():
                 if mol is not None: refs.append((smi, label, fingerprint(mol)))
     return refs
 
-REFERENCE_LIBRARY = load_reference_library()
+REFERENCE_LIBRARY = load_reference_library()\nCUSTOM_REFERENCE_LIBRARY = []\n\ndef set_custom_reference_library(smiles_rows):\n    global CUSTOM_REFERENCE_LIBRARY\n    refs=[]\n    for row in smiles_rows:\n        smi=(row.get(\"smiles\") if isinstance(row,dict) else str(row) or \"\").strip()\n        mol=parse_mol(smi)\n        if mol is not None:\n            refs.append((smi, \"custom\", fingerprint(mol)))\n    CUSTOM_REFERENCE_LIBRARY=refs\n    return len(refs)
 
 
 def nearest_analogs(mol, limit=5):
     fp = fingerprint(mol)
-    scored = [(DataStructs.TanimotoSimilarity(fp, ref_fp), smi, source) for smi, source, ref_fp in REFERENCE_LIBRARY]
+    scored = [(DataStructs.TanimotoSimilarity(fp, ref_fp), smi, source) for smi, source, ref_fp in (CUSTOM_REFERENCE_LIBRARY + REFERENCE_LIBRARY)]
     scored.sort(reverse=True)
     return [{"smiles": smi, "source": source, "tanimoto": round(score, 3)} for score, smi, source in scored[:limit]]
