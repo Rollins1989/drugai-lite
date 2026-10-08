@@ -47,8 +47,3 @@ def metrics():
     return Response(content=generate_latest(),media_type=CONTENT_TYPE_LATEST)
 
 app.mount("/",StaticFiles(directory=str(STATIC_DIR),html=True),name="static")
-
-
-@app.get("/api/v1/metrics",include_in_schema=False)
-def metrics():
-    return Response(content=generate_latest(),media_type=CONTENT_TYPE_LATEST)
