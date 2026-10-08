@@ -22,9 +22,9 @@ def version():return runtime_provenance(APP_VERSION,MODEL_VERSION)
 @router.get("/model-cards")
 def model_cards():
     return {"version":APP_VERSION,"model_version":MODEL_VERSION,"metrics":METRICS,
-            "features":["molecular profiling","ESOL solubility ensemble","Tox21 NR-AR ensemble","target-specific activity","applicability-domain signal","empirical ensemble spread","local sensitivity diagnostics","Morgan/Tanimoto analog search","scaffold analysis","Pareto multi-objective ranking","chemical-space PCA/clustering","dataset quality reports","CSV/PDF exports","Docker/CI"],
+            "features":["molecular profiling","ESOL solubility ensemble","Tox21 NR-AR ensemble","optional target-specific activity","applicability-domain signal","empirical ensemble spread","local sensitivity diagnostics","Morgan/Tanimoto analog search","scaffold analysis","Pareto multi-objective ranking","chemical-space PCA/clustering","dataset quality reports","CSV/PDF exports","Docker/CI"],
             "interpretation":{"model_agreement":"RF/Gradient Boosting disagreement; not calibrated confidence.","uncertainty":"Empirical RF-tree 10th–90th percentile spread; not a calibrated prediction interval.","screening_score":"Hand-weighted heuristic candidate-prioritization score.","applicability_domain":"Nearest-neighbour chemical-space proximity signal."},
-            "limitations":["No external or prospective experimental validation is claimed.","Tox21 NR-AR is one assay endpoint, not overall human toxicity.","Tree importance/local sensitivity are diagnostics, not causal attribution.","ChEMBL activity data contain assay and measurement heterogeneity.","All predictions are hypothesis-generation outputs requiring experimental validation."]}
+            "limitations":["No external or prospective experimental validation is claimed.","Tox21 NR-AR is one assay endpoint, not overall human toxicity.","Tree importance/local sensitivity are diagnostics, not causal attribution.","Local sensitivity uses one-standard-deviation descriptor perturbations around the training distribution.","ChEMBL activity data contain assay and measurement heterogeneity.","All predictions are hypothesis-generation outputs requiring experimental validation."]}
 
 @router.post("/analyze")
 def analyze(req:MoleculeRequest,target:str|None=None):
