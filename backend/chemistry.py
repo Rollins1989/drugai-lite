@@ -113,7 +113,19 @@ def load_reference_library():
                 if mol is not None: refs.append((smi, label, fingerprint(mol)))
     return refs
 
-REFERENCE_LIBRARY = load_reference_library()\nCUSTOM_REFERENCE_LIBRARY = []\n\ndef set_custom_reference_library(smiles_rows):\n    global CUSTOM_REFERENCE_LIBRARY\n    refs=[]\n    for row in smiles_rows:\n        smi=(row.get(\"smiles\") if isinstance(row,dict) else str(row) or \"\").strip()\n        mol=parse_mol(smi)\n        if mol is not None:\n            refs.append((smi, \"custom\", fingerprint(mol)))\n    CUSTOM_REFERENCE_LIBRARY=refs\n    return len(refs)
+REFERENCE_LIBRARY = load_reference_library()
+CUSTOM_REFERENCE_LIBRARY = []
+
+def set_custom_reference_library(smiles_rows):
+    global CUSTOM_REFERENCE_LIBRARY
+    refs = []
+    for row in smiles_rows:
+        smi = str(row.get("smiles", "") if isinstance(row, dict) else row).strip()
+        mol = parse_mol(smi)
+        if mol is not None:
+            refs.append((smi, "custom", fingerprint(mol)))
+    CUSTOM_REFERENCE_LIBRARY = refs
+    return len(refs)
 
 
 def nearest_analogs(mol, limit=5):
