@@ -84,3 +84,9 @@ def test_async_screen_job_lifecycle():
     assert job["job_id"].startswith("screen_")
     status=client.get("/api/screen/jobs/"+job["job_id"])
     assert status.status_code==200
+
+def test_async_screen_rejects_oversized_batch():
+    from config import MAX_BATCH_MOLECULES
+    payload=("CCO\n"* (MAX_BATCH_MOLECULES+1)).encode()
+    r=client.post("/api/screen/jobs",files={"file":("large.smi",payload,"text/plain")})
+    assert r.status_code==413
