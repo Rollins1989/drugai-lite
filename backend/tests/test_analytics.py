@@ -15,3 +15,12 @@ def test_dataset_quality():
     assert q["valid_structures"]==2
     assert q["duplicate_structures"]==1
     assert q["invalid_structures"]==1
+
+
+def test_chemical_space_singleton_and_pair():
+    one=chemical_space(["CCO"])
+    assert one["clusters"]==1
+    assert len(one["points"])==1
+    pair=chemical_space(["CCO","CCCO"])
+    assert len(pair["points"])==2
+    assert len(pair["pca_explained_variance"])==2
