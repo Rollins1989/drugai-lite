@@ -13,7 +13,7 @@ from analytics import chemical_space, dataset_quality, pairwise_similarity, pare
 from provenance import runtime_provenance
 from reports import molecule_pdf
 
-router=APIRouter(prefix="/api")
+router=APIRouter()
 
 @router.get("/health")
 def health():return {"status":"ok","version":APP_VERSION,"model_version":MODEL_VERSION,"reference_library_size":len(REFERENCE_LIBRARY),"targets":sorted(TARGET_MODELS)}
