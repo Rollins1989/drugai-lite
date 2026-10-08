@@ -60,30 +60,32 @@ DrugAI Lite combines **RDKit cheminformatics, machine learning, target-specific 
 
 ## API
 
-The API exposes interactive OpenAPI documentation at `http://127.0.0.1:8000/docs`.
+The API exposes interactive OpenAPI documentation at `http://127.0.0.1:8000/docs`. New integrations should use the `/api/v1` namespace. The original `/api` namespace remains available for backward compatibility.
 
 | Endpoint | Purpose |
 |---|---|
-| POST /api/analyze | Single-molecule analysis |
-| POST /api/compare | Compare two molecules |
-| POST /api/predict-activity | Target-specific activity |
-| POST /api/screen | Synchronous library screening |
-| POST /api/screen/jobs | Asynchronous screening |
-| GET /api/screen/jobs/{job_id} | Screening job status |
-| POST /api/chemical-space | PCA + clustering |
-| POST /api/pareto | Multi-objective Pareto ranking |
-| POST /api/dataset/quality | Dataset QC |
-| POST /api/references/upload | Custom reference library |
-| POST /api/screen/export.csv | Ranked CSV export |
-| POST /api/analyze/report.pdf | Molecular PDF report |
-| GET /api/model-cards | Model metadata and limitations |
-| GET /api/version | Runtime/model provenance |
-| GET /api/health | Health information |
+| POST /api/v1/analyze | Single-molecule analysis |
+| POST /api/v1/compare | Compare two molecules |
+| POST /api/v1/predict-activity | Target-specific activity |
+| POST /api/v1/screen | Synchronous library screening |
+| POST /api/v1/screen/jobs | Asynchronous screening |
+| GET /api/v1/screen/jobs/{job_id} | Screening job status |
+| POST /api/v1/chemical-space | PCA + clustering |
+| POST /api/v1/pareto | Multi-objective Pareto ranking |
+| POST /api/v1/dataset/quality | Dataset QC |
+| POST /api/v1/references/upload | Custom reference library |
+| POST /api/v1/screen/export.csv | Ranked CSV export |
+| POST /api/v1/analyze/report.pdf | Molecular PDF report |
+| GET /api/v1/model-cards | Model metadata and limitations |
+| GET /api/v1/evaluation | Evaluation metadata and validation hierarchy |
+| GET /api/v1/metrics | Prometheus-compatible operational metrics |
+| GET /api/v1/version | Runtime/model provenance |
+| GET /api/v1/health | Health information |
 
 Example:
 
 ~~~bash
-curl -X POST http://127.0.0.1:8000/api/analyze \
+curl -X POST http://127.0.0.1:8000/api/v1/analyze \
   -H "Content-Type: application/json" \
   -d '{"smiles":"CC(=O)Oc1ccccc1C(=O)O"}'
 ~~~
@@ -110,7 +112,7 @@ None of these should be interpreted as a calibrated probability of correctness.
 
 The bundled deployment models include a legacy evaluation snapshot in `backend/models/metrics.json`. Its original split metadata was not retained, so those headline numbers are not presented as a reproducible scaffold-split result. Run `backend/train_models.py` to regenerate the full random/scaffold evaluation artifacts and a fresh model manifest. Target-specific activity is optional: a cloned repository only exposes targets for which trained model artifacts are actually present.
 
-The project does **not** claim prospective experimental validation.
+See [`docs/evaluation.md`](docs/evaluation.md) for the reproducible evaluation contract, metrics guidance and validation hierarchy. The project does **not** claim prospective experimental validation.
 
 Recommended validation hierarchy:
 1. Random benchmark split
@@ -146,7 +148,7 @@ uvicorn main:app --reload
 
 Open `http://127.0.0.1:8000`.
 
-### Production hardening
+### Platform maturity\n- `/api/v1` is the supported versioned API namespace; `/api` is retained as a compatibility surface.\n- `GET /api/v1/evaluation` exposes evaluation metadata and validation boundaries.\n- `GET /api/v1/metrics` exposes Prometheus-compatible request and latency metrics.\n- See [`docs/release-process.md`](docs/release-process.md) and [`CHANGELOG.md`](CHANGELOG.md) for release hygiene.\n\n### Production hardening
 - Runtime dependencies exclude test-only packages (`pytest`, `httpx`); development dependencies are layered separately.
 - Docker runs the application as a non-root user.
 - Uploads are size- and format-limited, screening batches are capped, and asynchronous jobs have bounded active concurrency plus process-local TTL cleanup.
