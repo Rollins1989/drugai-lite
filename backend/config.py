@@ -7,4 +7,6 @@ APP_VERSION="4.0.0"
 MAX_BATCH_MOLECULES=int(os.getenv("DRUGAI_MAX_BATCH_MOLECULES","5000"))
 MAX_UPLOAD_BYTES=int(os.getenv("DRUGAI_MAX_UPLOAD_BYTES","10000000"))
 REQUEST_TIMEOUT_SECONDS=int(os.getenv("DRUGAI_REQUEST_TIMEOUT_SECONDS","60"))
+MAX_SCREEN_JOBS=int(os.getenv("DRUGAI_MAX_SCREEN_JOBS","100"))
+SCREEN_JOB_TTL_SECONDS=int(os.getenv("DRUGAI_SCREEN_JOB_TTL_SECONDS","3600"))
 DESCRIPTOR_NAMES=["MolWt","LogP","TPSA","NumHDonors","NumHAcceptors","NumRotatableBonds","NumAromaticRings","RingCount","FractionCSP3","NumHeteroatoms","QED","NumValenceElectrons"]

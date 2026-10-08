@@ -45,7 +45,7 @@ DrugAI Lite combines **RDKit cheminformatics, machine learning, target-specific 
 - Lipinski / Veber / PAINS filtering
 - Optional target-aware pIC50 prediction
 - Candidate prioritization
-- Asynchronous screening jobs
+- Asynchronous screening jobs with bounded concurrency, batch limits and in-memory TTL cleanup
 - Ranked CSV export
 
 ### Scientific reporting and engineering
@@ -145,6 +145,13 @@ uvicorn main:app --reload
 ~~~
 
 Open `http://127.0.0.1:8000`.
+
+### Production hardening
+- Runtime dependencies exclude test-only packages (`pytest`, `httpx`); development dependencies are layered separately.
+- Docker runs the application as a non-root user.
+- Uploads are size- and format-limited, screening batches are capped, and asynchronous jobs have bounded active concurrency plus process-local TTL cleanup.
+- Request IDs, processing latency and security response headers are emitted for operational diagnostics.
+- **Important:** async job state and custom reference libraries remain process-local. For multi-worker or multi-instance deployment, replace them with a shared datastore/job queue and add authentication, rate limiting and persistent job history.
 
 ### Docker
 ~~~bash

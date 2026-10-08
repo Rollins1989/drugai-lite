@@ -3,12 +3,13 @@ from __future__ import annotations
 import csv
 import io
 import threading
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import HTTPException
 from rdkit import Chem
 from chemistry import compute_descriptors, lipinski_verdict, molecular_identity, nearest_analogs, parse_mol, structural_alerts, structure_svg_b64, veber_verdict
-from config import MAX_BATCH_MOLECULES
+from config import MAX_BATCH_MOLECULES, MAX_SCREEN_JOBS, SCREEN_JOB_TTL_SECONDS
 from model_service import explain, local_sensitivity, predict_solubility, predict_toxicity, screening_score, target_activity_prediction
 from analytics import pareto_rank
 
@@ -78,19 +79,36 @@ def screen_library(raw_smiles,target=None):return _screen_records([{"smiles":x} 
 
 def screen_records(records,target=None):return _screen_records(records,target)
 
+def _cleanup_jobs(now=None):
+    now=time.time() if now is None else now
+    expired=[]
+    with _LOCK:
+        for job_id,job in list(_JOBS.items()):
+            if job.get("status") in {"completed","failed"} and now-job.get("finished_at",now)>SCREEN_JOB_TTL_SECONDS:
+                expired.append(job_id)
+        for job_id in expired:_JOBS.pop(job_id,None)
+
 def start_screen_job(records,target=None):
-    job_id=f"screen_{uuid.uuid4().hex[:12]}"
-    with _LOCK:_JOBS[job_id]={"job_id":job_id,"status":"queued","processed":0,"total":len(records)}
+    if len(records)>MAX_BATCH_MOLECULES:
+        raise HTTPException(status_code=413,detail=f"Maximum batch size is {MAX_BATCH_MOLECULES:,} molecules.")
+    _cleanup_jobs()
+    with _LOCK:
+        active=sum(1 for job in _JOBS.values() if job.get("status") in {"queued","running"})
+        if active>=MAX_SCREEN_JOBS:
+            raise HTTPException(status_code=429,detail="Too many screening jobs are currently active. Try again later.")
+        job_id=f"screen_{uuid.uuid4().hex[:12]}"
+        _JOBS[job_id]={"job_id":job_id,"status":"queued","processed":0,"total":len(records),"created_at":time.time()}
     def work():
         with _LOCK:_JOBS[job_id]["status"]="running"
         try:
             result=screen_records(records,target)
-            with _LOCK:_JOBS[job_id].update({"status":"completed","result":result,"processed":len(records)})
+            with _LOCK:_JOBS[job_id].update({"status":"completed","result":result,"processed":len(records),"finished_at":time.time()})
         except Exception as exc:
-            with _LOCK:_JOBS[job_id].update({"status":"failed","error":str(exc)})
+            with _LOCK:_JOBS[job_id].update({"status":"failed","error":str(exc),"finished_at":time.time()})
     _EXECUTOR.submit(work); return _JOBS[job_id]
 
 def get_screen_job(job_id):
+    _cleanup_jobs()
     job=_JOBS.get(job_id)
     if not job:raise HTTPException(status_code=404,detail="Screening job not found.")
     return job
