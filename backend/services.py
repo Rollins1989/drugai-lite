@@ -1,6 +1,7 @@
 """Domain services for molecule analysis, library ingestion, screening and jobs."""
 from __future__ import annotations
-import csv, io, threading, uuid
+import csv
+import io, threading, uuid
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import HTTPException
 from rdkit import Chem
