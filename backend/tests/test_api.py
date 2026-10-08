@@ -102,3 +102,20 @@ def test_security_headers():
 def test_async_screen_rejects_unsupported_file_type():
     r=client.post("/api/screen/jobs",files={"file":("input.exe",b"CCO\n","application/octet-stream")})
     assert r.status_code==400
+
+
+def test_versioned_api_surface_and_legacy_compatibility():
+    assert client.get("/api/v1/health").status_code==200
+    assert client.get("/api/health").status_code==200
+    assert client.get("/api/v1/version").json()["application_version"]=="4.0.0"
+
+def test_evaluation_contract():
+    d=client.get("/api/v1/evaluation").json()
+    assert d["application_version"]=="4.0.0"
+    assert "validation_hierarchy" in d
+    assert d["artifact_directory"]=="backend/models/evaluation/"
+
+def test_prometheus_metrics_endpoint():
+    r=client.get("/api/v1/metrics")
+    assert r.status_code==200
+    assert "drugai_http_requests_total" in r.text
