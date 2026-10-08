@@ -20,7 +20,7 @@ def _values(row):
     activity = row.get("activity", row.get("predicted_pIC50"))
     return {
         "activity": float(activity) if activity is not None else None,
-        "toxicity": float(row.get("toxicity_probability", row.get("toxicity", 1.0))),
+        "toxicity": float(row.get("toxicity_probability", row.get("toxicity", {}).get("toxicity_probability", 1.0) if isinstance(row.get("toxicity"), dict) else row.get("toxicity", 1.0))),
         "solubility": float(row.get("solubility", row.get("log_solubility_mol_per_L", -99))),
         "qed": float(row.get("qed", 0.0)),
         "mw": float(row.get("mw", row.get("MolWt", 9999))),
@@ -73,7 +73,7 @@ def chemical_space(smiles: list[str], labels: list[str]|None=None, n_clusters: i
         if m is None: continue
         valid.append(i); original.append(s); fps.append(fingerprint(m))
     if not fps: return {"points":[],"pca_explained_variance":[],"clusters":0}
-    X=np.asarray([fp.ToBitString() for fp in fps],dtype="U1").astype(np.uint8)
+    X=np.asarray([[int(bit) for bit in fp.ToBitString()] for fp in fps],dtype=np.uint8)
     pca=PCA(n_components=2,random_state=42)
     coords=pca.fit_transform(X)
     k=max(1,min(n_clusters,len(fps)))
