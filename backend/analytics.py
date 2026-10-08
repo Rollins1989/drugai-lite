@@ -86,8 +86,15 @@ def chemical_space(smiles: list[str], labels: list[str]|None=None, n_clusters: i
         valid.append(i); original.append(s); fps.append(fingerprint(m))
     if not fps: return {"points":[],"pca_explained_variance":[],"clusters":0}
     X=np.asarray([[int(bit) for bit in fp.ToBitString()] for fp in fps],dtype=np.uint8)
-    pca=PCA(n_components=2,random_state=42)
-    coords=pca.fit_transform(X)
+    if len(fps)==1:
+        point={"index":valid[0],"smiles":original[0],"x":0.0,"y":0.0,"cluster":0,"label":labels[valid[0]] if labels else None}
+        return {"points":[point],"clusters":1,"pca_explained_variance":[1.0,0.0]}
+    n_components=min(2,X.shape[0],X.shape[1])
+    pca=PCA(n_components=n_components,random_state=42)
+    raw_coords=pca.fit_transform(X)
+    coords=np.column_stack([raw_coords[:,0],raw_coords[:,1] if n_components>1 else np.zeros(len(fps))])
+    explained=list(pca.explained_variance_ratio_)
+    if len(explained)<2: explained.append(0.0)
     k=max(1,min(n_clusters,len(fps)))
     if len(fps)>1 and k>1:
         clusterer=AgglomerativeClustering(n_clusters=k,metric="euclidean",linkage="ward")
@@ -96,7 +103,7 @@ def chemical_space(smiles: list[str], labels: list[str]|None=None, n_clusters: i
     points=[]
     for j,(idx,s) in enumerate(zip(valid,original)):
         points.append({"index":idx,"smiles":s,"x":round(float(coords[j,0]),4),"y":round(float(coords[j,1]),4),"cluster":int(clusters[j]),"label":labels[idx] if labels else None})
-    return {"points":points,"clusters":int(k),"pca_explained_variance":[round(float(x),4) for x in pca.explained_variance_ratio_]}
+    return {"points":points,"clusters":int(k),"pca_explained_variance":[round(float(x),4) for x in explained[:2]]}
 
 def pairwise_similarity(smiles_a:str, smiles_b:str)->dict:
     a,b=parse_mol(smiles_a),parse_mol(smiles_b)
