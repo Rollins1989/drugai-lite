@@ -79,6 +79,7 @@ async def screen(file:UploadFile=File(...),target:str|None=Form(None)):
 
 @router.post("/screen/jobs")
 async def screen_job(file:UploadFile=File(...),target:str|None=Form(None)):
+    if not file.filename or not file.filename.lower().endswith((".csv",".txt",".smi")):raise HTTPException(status_code=400,detail="Upload a .csv, .txt, or .smi file.")
     content=await file.read()
     if len(content)>MAX_UPLOAD_BYTES:raise HTTPException(status_code=413,detail="Uploaded file is too large.")
     return start_screen_job(parse_uploaded_records(content.decode(errors="replace")),target.strip().lower() if target else None)
