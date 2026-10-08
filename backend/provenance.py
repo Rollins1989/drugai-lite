@@ -1,8 +1,10 @@
 """Runtime/model provenance and structured request metadata."""
 from __future__ import annotations
-import hashlib, platform
+import hashlib
+import platform
 from datetime import datetime, timezone
-import rdkit, sklearn
+import rdkit
+import sklearn
 
 def sha256_text(value:str)->str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
