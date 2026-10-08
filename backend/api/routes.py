@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv, io, uuid
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response
-from chemistry import REFERENCE_LIBRARY
+from chemistry import REFERENCE_LIBRARY, set_custom_reference_library
 from config import APP_VERSION, MAX_UPLOAD_BYTES
 from model_service import METRICS, MODEL_VERSION, TARGET_MODELS
 from schemas import ActivityRequest, ChemicalSpaceRequest, CompareRequest, MoleculeRequest, ParetoRequest
@@ -53,6 +53,14 @@ async def dataset_quality_route(file:UploadFile=File(...)):
     content=await file.read()
     if len(content)>MAX_UPLOAD_BYTES:raise HTTPException(status_code=413,detail="Uploaded file is too large.")
     return dataset_quality(parse_uploaded_records(content.decode(errors="replace")))
+
+@router.post("/references/upload")
+async def upload_reference(file:UploadFile=File(...)):
+    content=await file.read()
+    if len(content)>MAX_UPLOAD_BYTES: raise HTTPException(status_code=413,detail="Uploaded reference library is too large.")
+    records=parse_uploaded_records(content.decode(errors="replace"))
+    count=set_custom_reference_library(records)
+    return {"loaded_molecules":count,"reference_type":"custom","note":"Custom reference libraries are process-local and reset when the server restarts."}
 
 @router.get("/activity-targets")
 def activity_targets():
