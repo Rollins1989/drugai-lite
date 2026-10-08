@@ -1,7 +1,5 @@
 """Library analytics: multi-objective ranking, chemical space, clustering, and comparisons."""
 from __future__ import annotations
-import math
-from typing import Iterable
 import numpy as np
 from rdkit import Chem, DataStructs
 from sklearn.cluster import AgglomerativeClustering
