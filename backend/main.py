@@ -4,7 +4,13 @@ import uuid
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest\n\ndef unique_operation_id(route):\n    methods=sorted(getattr(route,"methods",[]) or [])\n    method="_".join(m.lower() for m in methods)\n    return f"{method}_{route.path_format.strip("/").replace("/", "_").replace("{", "").replace("}", "")}"
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+
+def unique_operation_id(route):
+    methods=sorted(getattr(route, "methods", []) or [])
+    method="_".join(m.lower() for m in methods)
+    path=route.path_format.strip("/").replace("/", "_").replace("{", "").replace("}", "")
+    return f"{method}_{path}"
 from api.routes import router
 from config import APP_VERSION, STATIC_DIR
 
