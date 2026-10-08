@@ -42,6 +42,10 @@ async def request_metadata(request:Request,call_next):
     response.headers["Referrer-Policy"]="strict-origin-when-cross-origin"
     return response
 
+@app.get("/api/v1/metrics",include_in_schema=False)
+def metrics():
+    return Response(content=generate_latest(),media_type=CONTENT_TYPE_LATEST)
+
 app.mount("/",StaticFiles(directory=str(STATIC_DIR),html=True),name="static")
 
 
