@@ -19,6 +19,17 @@ router=APIRouter()
 def health():return {"status":"ok","version":APP_VERSION,"model_version":MODEL_VERSION,"reference_library_size":len(REFERENCE_LIBRARY),"targets":sorted(TARGET_MODELS)}
 @router.get("/version")
 def version():return runtime_provenance(APP_VERSION,MODEL_VERSION)
+@router.get("/evaluation")
+def evaluation():
+    return {
+        "application_version": APP_VERSION,
+        "model_version": MODEL_VERSION,
+        "status": METRICS.get("status","unknown"),
+        "metrics": METRICS,
+        "validation_hierarchy":["random benchmark split","Bemis-Murcko scaffold-disjoint split","temporal split where timestamps are available","independent external dataset","prospective experimental validation"],
+        "artifact_directory":"backend/models/evaluation/",
+    }
+
 @router.get("/model-cards")
 def model_cards():
     return {"version":APP_VERSION,"model_version":MODEL_VERSION,"metrics":METRICS,
