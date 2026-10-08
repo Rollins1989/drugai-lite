@@ -14,6 +14,13 @@ def unique_operation_id(route):
 from api.routes import router
 from config import APP_VERSION, STATIC_DIR
 
+def unique_operation_id(route):
+    methods=sorted(getattr(route, "methods", []) or [])
+    method="_".join(m.lower() for m in methods)
+    path=route.path_format.strip("/").replace("/", "_").replace("{", "").replace("}", "")
+    return f"{method}_{path}"
+
+
 REQUEST_COUNT=Counter("drugai_http_requests_total","HTTP requests",["method","path","status"])
 REQUEST_LATENCY=Histogram("drugai_http_request_duration_seconds","HTTP request latency",["method","path"])
 app=FastAPI(title="DrugAI Lite",version=APP_VERSION,generate_unique_id_function=unique_operation_id,description="Open-source computational drug-discovery workspace for molecular profiling, target activity prediction and virtual screening.")
