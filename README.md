@@ -34,6 +34,7 @@ DrugAI Lite combines **RDKit cheminformatics, machine learning, target-specific 
 - Agglomerative clustering
 - Custom reference-library upload
 - Dataset quality reporting
+- Interactive PCA chemical-space scatter visualization
 - Multi-objective Pareto ranking
 
 ### Virtual screening
@@ -169,6 +170,10 @@ The EGFR/CHEMBL203 training pipeline is included, but no target model is treated
 
 The target pipeline records ChEMBL retrieval/query metadata and dataset hashes so refreshed training runs are auditable.
 
+## Scientific methodology
+
+See [`docs/scientific-methodology.md`](docs/scientific-methodology.md) for the model inputs, validation hierarchy, chemical-space interpretation, sensitivity methodology and scientific boundaries.
+
 ## Scientific limitations
 - Tox21 NR-AR is one assay endpoint and must not be generalized to overall human toxicity.
 - pIC50 predictions are computational estimates, not experimental activity measurements.
@@ -182,7 +187,8 @@ The target pipeline records ChEMBL retrieval/query metadata and dataset hashes s
 
 ## Version
 **Application: 4.0.0**  
-**Bundled model bundle: 3.1.0 (explicitly tracked in `backend/models/model_version.json`)**
+**Bundled model bundle: 3.1.0 (explicitly tracked in `backend/models/model_version.json`)**  
+**Software citation: `CITATION.cff`**
 
 ## License
 MIT License. See LICENSE.

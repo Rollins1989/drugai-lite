@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "DrugAI Lite"
+message: "If you use DrugAI Lite in academic work, please cite the repository."
+type: software
+authors:
+  - family-names: Chauhan
+    given-names: Kuldeep Singh
+repository-code: "https://github.com/Rollins1989/drugai-lite"
+license: MIT
+version: "4.0.0"

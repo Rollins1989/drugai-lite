@@ -69,3 +69,18 @@ def test_local_sensitivity_uses_real_perturbations():
     assert all("solubility_delta_plus_1sd" in row for row in rows)
     assert all("toxicity_probability_delta_plus_1sd" in row for row in rows)
     assert any(abs(row["solubility_delta_plus_1sd"])>0 or abs(row["toxicity_probability_delta_plus_1sd"])>0 for row in rows)
+
+def test_chemical_space_single_molecule_api():
+    r=client.post("/api/chemical-space",json={"smiles":["CCO"]})
+    assert r.status_code==200
+    d=r.json()
+    assert d["clusters"]==1
+    assert len(d["points"])==1
+
+def test_async_screen_job_lifecycle():
+    r=client.post("/api/screen/jobs",files={"file":("x.smi",b"CCO\nCCCO\n","text/plain")})
+    assert r.status_code==200
+    job=r.json()
+    assert job["job_id"].startswith("screen_")
+    status=client.get("/api/screen/jobs/"+job["job_id"])
+    assert status.status_code==200
