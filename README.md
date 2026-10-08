@@ -20,13 +20,13 @@ DrugAI Lite combines **RDKit cheminformatics, machine learning, target-specific 
 ### ML prediction
 - ESOL/Delaney solubility regression
 - Tox21 NR-AR classification
-- EGFR/CHEMBL203 target activity prediction
+- Optional target-specific activity prediction (EGFR/CHEMBL203 training pipeline included; model bundles are not assumed to be present)
 - Random Forest + Gradient Boosting ensembles
 - Random and Bemis–Murcko scaffold evaluation
 - RF/GB model-agreement diagnostics
 - Empirical RF-tree spread diagnostics
 - Global feature importance
-- Local one-feature sensitivity diagnostics
+- Local one-feature ±1 training-standard-deviation sensitivity diagnostics
 
 ### Chemical-space intelligence
 - Morgan fingerprints and Tanimoto nearest-neighbour search
@@ -107,7 +107,7 @@ None of these should be interpreted as a calibrated probability of correctness.
 
 ## Evaluation
 
-The repository reports internal benchmark and scaffold-split evaluation for its bundled models. Target training records ChEMBL retrieval metadata, hashes, split configuration and model metadata.
+The bundled deployment models include a legacy evaluation snapshot in `backend/models/metrics.json`. Its original split metadata was not retained, so those headline numbers are not presented as a reproducible scaffold-split result. Run `backend/train_models.py` to regenerate the full random/scaffold evaluation artifacts and a fresh model manifest. Target-specific activity is optional: a cloned repository only exposes targets for which trained model artifacts are actually present.
 
 The project does **not** claim prospective experimental validation.
 
@@ -160,10 +160,12 @@ cd backend
 python train_models.py
 ~~~
 
-Target activity:
+Target activity (optional; downloads current ChEMBL data and creates a target model bundle):
 ~~~bash
 python train_target_activity.py --target CHEMBL203 --name egfr
 ~~~
+
+The EGFR/CHEMBL203 training pipeline is included, but no target model is treated as bundled unless `backend/models/targets/<name>/` contains the required artifacts. The UI/API therefore report zero available targets rather than advertising an unavailable EGFR model.
 
 The target pipeline records ChEMBL retrieval/query metadata and dataset hashes so refreshed training runs are auditable.
 
@@ -172,14 +174,15 @@ The target pipeline records ChEMBL retrieval/query metadata and dataset hashes s
 - pIC50 predictions are computational estimates, not experimental activity measurements.
 - RF/GB agreement and RF-tree spread are diagnostic signals, not calibrated confidence intervals.
 - Nearest-neighbour chemical-space proximity is not a formal statistical applicability-domain guarantee.
-- Global feature importance and local perturbation sensitivity are explanatory diagnostics, not causal attribution.
+- Global feature importance and local ±1 training-standard-deviation sensitivity are explanatory diagnostics, not causal attribution.
 - The candidate-prioritization score is hand-weighted and unvalidated.
 - ChEMBL measurements can contain assay and experimental heterogeneity.
 - Models can fail outside their training distribution.
 - Experimental validation remains necessary for biological conclusions.
 
 ## Version
-**Application: 4.0.0**
+**Application: 4.0.0**  
+**Bundled model bundle: 3.1.0 (explicitly tracked in `backend/models/model_version.json`)**
 
 ## License
 MIT License. See LICENSE.
