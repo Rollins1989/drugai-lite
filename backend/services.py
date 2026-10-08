@@ -44,10 +44,10 @@ def parse_uploaded_records(content:str)->list[dict]:
 def parse_uploaded_smiles(content:str):return [r["smiles"].strip() for r in parse_uploaded_records(content)]
 
 def _screen_records(records,target=None):
-    raw=[str(r.get("smiles","")).strip() for r in records if str(r.get("smiles","")).strip()]
+    pairs=[(str(r.get("smiles","")).strip(),r) for r in records if str(r.get("smiles","")).strip()]\n    raw=[p[0] for p in pairs]
     if len(raw)>MAX_BATCH_MOLECULES:raise HTTPException(status_code=413,detail=f"Maximum batch size is {MAX_BATCH_MOLECULES:,} molecules.")
     valid=[]; invalid=duplicates=lipinski_fail=pains_flagged=0; seen=set()
-    for idx,(smi,meta) in enumerate(zip(raw,records)):
+    for idx,(smi,meta) in enumerate(pairs):
         mol=parse_mol(smi)
         if mol is None:invalid+=1;continue
         canonical=Chem.MolToSmiles(mol,canonical=True)
