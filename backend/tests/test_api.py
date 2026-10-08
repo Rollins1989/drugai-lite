@@ -48,3 +48,24 @@ def test_screen_small_library():
     d=r.json()
     assert d["candidate_count"]>=1
     assert "all_candidates" in d
+
+def test_model_manifest_is_explicit():
+    v=client.get("/api/version").json()
+    assert v["application_version"]=="4.0.0"
+    assert v["model_version"]["model_bundle_version"]=="3.1.0"
+    assert v["model_version"]["application_version"]=="4.0.0"
+
+def test_target_catalog_matches_bundled_availability():
+    r=client.get("/api/activity-targets")
+    assert r.status_code==200
+    for target in r.json()["targets"]:
+        assert target["name"]
+        assert target["target_chembl_id"]
+
+def test_local_sensitivity_uses_real_perturbations():
+    d=client.post("/api/analyze",json={"smiles":"CCO"}).json()
+    rows=d["local_sensitivity"]["features"]
+    assert len(rows)==12
+    assert all("solubility_delta_plus_1sd" in row for row in rows)
+    assert all("toxicity_probability_delta_plus_1sd" in row for row in rows)
+    assert any(abs(row["solubility_delta_plus_1sd"])>0 or abs(row["toxicity_probability_delta_plus_1sd"])>0 for row in rows)

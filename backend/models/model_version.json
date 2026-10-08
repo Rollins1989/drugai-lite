@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "model_bundle_version": "3.1.0",
+  "application_version": "4.0.0",
+  "training_pipeline_version": "3.1.0",
+  "status": "legacy bundled model artifacts; compatible with application 4.x",
+  "deployment_split": "Bemis-Murcko scaffold",
+  "training_script": "train_models.py",
+  "random_state": 42,
+  "requested_test_fraction": 0.2,
+  "artifacts": [
+    "solubility_rf.joblib",
+    "solubility_gb.joblib",
+    "solubility_scaler.joblib",
+    "toxicity_rf.joblib",
+    "toxicity_gb.joblib",
+    "toxicity_scaler.joblib"
+  ],
+  "regeneration_command": "cd backend && python train_models.py"
+}

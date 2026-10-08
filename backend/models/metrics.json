@@ -1,4 +1,8 @@
 {
+  "schema_version": 2,
+  "status": "bundled deployment benchmark snapshot",
+  "note": "These metrics describe the currently bundled model artifacts. The legacy bundle does not record its original split metadata; run backend/train_models.py to regenerate reproducible random/scaffold evaluation artifacts.",
+  "regeneration_command": "cd backend && python train_models.py",
   "solubility": {
     "rf_r2": 0.8665,
     "gb_r2": 0.8805,
@@ -6,7 +10,7 @@
     "ensemble_rmse": 0.7589,
     "n_train": 902,
     "n_test": 226,
-    "dataset": "ESOL (Delaney) \u2014 1128 molecules, MoleculeNet"
+    "dataset": "ESOL (Delaney) — 1128 molecules, MoleculeNet"
   },
   "toxicity": {
     "rf_auc": 0.7673,

@@ -54,14 +54,39 @@ def explain(desc):
     return {"toxicity":ranked(tox_rf),"solubility":ranked(sol_rf),"method":"Global tree feature_importances_; per-molecule local sensitivity is reported separately."}
 
 def local_sensitivity(desc):
-    base=descriptor_vector(desc); median=np.median(base,axis=0)
-    sol_base=float((sol_rf.predict(base)[0]+sol_gb.predict(base)[0])/2); tox_base=float((tox_rf.predict_proba(base)[0][1]+tox_gb.predict_proba(base)[0][1])/2)
+    """Estimate directional one-feature sensitivity around the training distribution.
+
+    The deployed models require scaled descriptor inputs. The previous implementation
+    accidentally predicted on raw descriptors and used the molecule's own values as
+    its "median", making the diagnostic effectively zero.
+    """
+    base=descriptor_vector(desc)
+    sol_X=sol_scaler.transform(base)
+    tox_X=tox_scaler.transform(base)
+    sol_base=float((sol_rf.predict(sol_X)[0]+sol_gb.predict(sol_X)[0])/2)
+    tox_base=float((tox_rf.predict_proba(tox_X)[0][1]+tox_gb.predict_proba(tox_X)[0][1])/2)
+    sol_mean=np.asarray(getattr(sol_scaler,"mean_",base[0]),dtype=float)
+    sol_scale=np.maximum(np.asarray(getattr(sol_scaler,"scale_",np.ones(len(DESCRIPTOR_NAMES))),dtype=float),1e-9)
+    tox_mean=np.asarray(getattr(tox_scaler,"mean_",base[0]),dtype=float)
+    tox_scale=np.maximum(np.asarray(getattr(tox_scaler,"scale_",np.ones(len(DESCRIPTOR_NAMES))),dtype=float),1e-9)
     rows=[]
     for i,name in enumerate(DESCRIPTOR_NAMES):
-        pert=base.copy(); pert[0,i]=median[i]
-        sol=float((sol_rf.predict(pert)[0]+sol_gb.predict(pert)[0])/2); tox=float((tox_rf.predict_proba(pert)[0][1]+tox_gb.predict_proba(pert)[0][1])/2)
-        rows.append({"descriptor":name,"solubility_delta":round(sol-sol_base,4),"toxicity_probability_delta":round(tox-tox_base,4)})
-    return {"method":"One-feature median perturbation sensitivity; directional diagnostic, not causal attribution.","features":rows}
+        sol_plus=base.copy(); sol_plus[0,i]=sol_mean[i]+sol_scale[i]
+        sol_minus=base.copy(); sol_minus[0,i]=sol_mean[i]-sol_scale[i]
+        tox_plus=base.copy(); tox_plus[0,i]=tox_mean[i]+tox_scale[i]
+        tox_minus=base.copy(); tox_minus[0,i]=tox_mean[i]-tox_scale[i]
+        sol_p=float((sol_rf.predict(sol_scaler.transform(sol_plus))[0]+sol_gb.predict(sol_scaler.transform(sol_plus))[0])/2)
+        sol_m=float((sol_rf.predict(sol_scaler.transform(sol_minus))[0]+sol_gb.predict(sol_scaler.transform(sol_minus))[0])/2)
+        tox_p=float((tox_rf.predict_proba(tox_scaler.transform(tox_plus))[0][1]+tox_gb.predict_proba(tox_scaler.transform(tox_plus))[0][1])/2)
+        tox_m=float((tox_rf.predict_proba(tox_scaler.transform(tox_minus))[0][1]+tox_gb.predict_proba(tox_scaler.transform(tox_minus))[0][1])/2)
+        rows.append({"descriptor":name,
+                     "solubility_delta":round(sol_p-sol_base,4),
+                     "solubility_delta_minus_1sd":round(sol_m-sol_base,4),
+                     "solubility_delta_plus_1sd":round(sol_p-sol_base,4),
+                     "toxicity_probability_delta":round(tox_p-tox_base,4),
+                     "toxicity_probability_delta_minus_1sd":round(tox_m-tox_base,4),
+                     "toxicity_probability_delta_plus_1sd":round(tox_p-tox_base,4)})
+    return {"method":"One-feature ±1 training-standard-deviation perturbation; directional diagnostic, not causal attribution.","baseline":{"solubility":round(sol_base,4),"toxicity_probability":round(tox_base,4)},"features":rows}
 
 def screening_score(sol,tox,qed,pains_pass,lipinski_pass,veber_pass,domain_status):
     sol_component={"GOOD":1.0,"MODERATE":.6,"POOR":.2}[sol["label"]]; domain_component={"HIGH":1.0,"MODERATE":.8,"LOW":.5,"UNKNOWN":.6}[domain_status]
