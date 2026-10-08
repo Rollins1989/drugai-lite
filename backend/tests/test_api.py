@@ -119,3 +119,11 @@ def test_prometheus_metrics_endpoint():
     r=client.get("/api/v1/metrics")
     assert r.status_code==200
     assert "drugai_http_requests_total" in r.text
+
+
+def test_openapi_has_unique_operation_ids():
+    spec=client.get("/openapi.json").json()
+    ids=[operation.get("operationId") for path in spec["paths"].values() for operation in path.values() if isinstance(operation,dict) and "operationId" in operation]
+    assert len(ids)==len(set(ids))
+    assert any(path.startswith("/api/v1/") for path in spec["paths"])
+    assert any(path.startswith("/api/") and not path.startswith("/api/v1/") for path in spec["paths"])
