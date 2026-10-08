@@ -1,203 +1,498 @@
 # DrugAI Lite
 
-### Open-source computational drug-discovery workspace
+<p align="center">
+  <strong>Computational Drug Discovery & Molecular Screening Platform</strong><br>
+  <sub>RDKit • Machine Learning • Chemical Space • Virtual Screening • FastAPI • Docker</sub>
+</p>
 
-DrugAI Lite combines **RDKit cheminformatics, machine learning, target-specific activity prediction, chemical-space analysis and virtual screening** behind a FastAPI API and browser workspace.
+<p align="center">
+  <a href="https://github.com/Rollins1989/drugai-lite/actions/workflows/ci.yml"><img src="https://github.com/Rollins1989/drugai-lite/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Rollins1989/drugai-lite/actions/workflows/security.yml"><img src="https://github.com/Rollins1989/drugai-lite/actions/workflows/security.yml/badge.svg" alt="Security"></a>
+  <img src="https://img.shields.io/badge/Python-3.12%2B-blue" alt="Python">
+  <img src="https://img.shields.io/badge/RDKit-2026.03.6-blueviolet" alt="RDKit">
+  <img src="https://img.shields.io/badge/FastAPI-0.141.1-009688" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Docker-supported-2496ED" alt="Docker">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License">
+</p>
 
-> **Scientific boundary:** DrugAI Lite is a computational research aid. Predictions, prioritization scores, applicability-domain signals and uncertainty diagnostics are not clinical, regulatory, safety, efficacy or experimental evidence.
+DrugAI Lite is an open-source computational drug-discovery workspace for **molecular analysis, property prediction, target-activity modeling, chemical-space exploration, virtual screening, and scientific reporting**.
 
-[![CI](https://github.com/Rollins1989/drugai-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/Rollins1989/drugai-lite/actions/workflows/ci.yml)
+It combines **RDKit**, classical machine learning, a versioned FastAPI service, interactive browser tooling, reproducible evaluation workflows, Docker, and operational telemetry in one research-oriented platform.
 
-## Feature set
+> **Scientific boundary**
+>
+> DrugAI Lite is a computational research and prioritization tool. Its predictions, scores, applicability-domain signals, and uncertainty diagnostics are **not** clinical, regulatory, safety, efficacy, binding-affinity, or experimental evidence.
 
-### Molecular intelligence
-- Canonical SMILES, molecular formula, exact mass and 2D structure
-- MW, LogP, TPSA, HBD/HBA, rotatable bonds, rings, CSP3 and QED
-- Murcko scaffold
+---
+
+## Why this project?
+
+Drug discovery models are more useful when the workflow around them is transparent, reproducible, and testable.
+
+DrugAI Lite is built around:
+
+**molecule → descriptors → prediction → diagnostics → chemical context → prioritization → screening → report**
+
+The platform combines cheminformatics, supervised ML, chemical-space analysis, virtual screening, evaluation, API engineering, containerization, testing, and security automation.
+
+---
+
+## Core capabilities
+
+### Molecular analysis
+
+- Canonical SMILES, molecular formula, exact mass, and 2D structure
+- Molecular weight, LogP, TPSA, HBD/HBA, rotatable bonds, rings, CSP3, QED
+- Bemis–Murcko scaffold
 - Lipinski and Veber checks
 - PAINS structural alerts
 
-### ML prediction
-- ESOL/Delaney solubility regression
+### Machine learning
+
+- ESOL / Delaney solubility regression
 - Tox21 NR-AR classification
-- Optional target-specific activity prediction (EGFR/CHEMBL203 training pipeline included; model bundles are not assumed to be present)
+- Optional target-specific pIC50 modeling pipeline
 - Random Forest + Gradient Boosting ensembles
-- Random and Bemis–Murcko scaffold evaluation
-- RF/GB model-agreement diagnostics
+- RF/GB agreement diagnostics
 - Empirical RF-tree spread diagnostics
 - Global feature importance
-- Local one-feature ±1 training-standard-deviation sensitivity diagnostics
+- Local ±1 training-standard-deviation sensitivity diagnostics
+- Model and application provenance
 
-### Chemical-space intelligence
-- Morgan fingerprints and Tanimoto nearest-neighbour search
-- PCA chemical-space projection
+### Chemical-space analysis
+
+- Morgan fingerprints
+- Tanimoto similarity
+- Nearest-neighbour search
+- PCA projection
 - Agglomerative clustering
+- Interactive chemical-space visualization
 - Custom reference-library upload
 - Dataset quality reporting
-- Interactive PCA chemical-space scatter visualization
-- Multi-objective Pareto ranking
+- Pareto multi-objective ranking
 
 ### Virtual screening
+
 - CSV / TXT / SMI ingestion
-- CSV metadata preservation
-- Structure validation and canonicalization
+- SMILES validation and canonicalization
 - Duplicate detection
+- Metadata preservation
 - Lipinski / Veber / PAINS filtering
+- ML predictions
 - Optional target-aware pIC50 prediction
 - Candidate prioritization
-- Asynchronous screening jobs with bounded concurrency, batch limits and in-memory TTL cleanup
+- Asynchronous screening jobs
 - Ranked CSV export
 
-### Scientific reporting and engineering
+### Scientific reporting
+
+- Molecular PDF reports
+- Model cards
+- Evaluation metadata
 - Runtime/model provenance
 - Request IDs and processing latency
-- Model cards
-- Molecular PDF reports
-- FastAPI + Pydantic
-- Docker + healthcheck
-- pytest + coverage + Ruff
-- GitHub Actions + CodeQL + Dependabot
+- Prometheus-compatible operational metrics
+- Docker deployment
+- GitHub Actions, CodeQL, and Dependabot
+
+---
+
+## Model performance
+
+The bundled deployment models include a **legacy evaluation snapshot**.
+
+| Model | Metric | Benchmark |
+|---|---:|---:|
+| ESOL ensemble | R² | ~0.878 |
+| ESOL ensemble | RMSE | ~0.759 |
+| Tox21 NR-AR ensemble | ROC-AUC | ~0.769 |
+
+These numbers describe the bundled deployment benchmark snapshot. They are **not** prospective performance claims and are not evidence of biological or clinical validity.
+
+The reproducible training pipeline can regenerate evaluation artifacts using random and Bemis–Murcko scaffold-disjoint evaluation, with regression/classification metrics and diagnostic plots.
+
+See [docs/evaluation.md](docs/evaluation.md).
+
+---
+
+## Architecture
+
+```text
+                           DrugAI Lite
+                                │
+                ┌───────────────┴───────────────┐
+                │                               │
+          Browser Workspace                 REST API
+                │                               │
+                └───────────────┬───────────────┘
+                                │
+                            FastAPI
+                                │
+        ┌───────────────────────┼───────────────────────┐
+        │                       │                       │
+     RDKit /                 ML Models              Analytics
+   Cheminformatics          RF + GB              PCA / Clustering
+        │                  ESOL / Tox21             Similarity
+   Descriptors             Target pipeline            Pareto
+   Lipinski
+   PAINS
+        │                       │                       │
+        └───────────────────────┼───────────────────────┘
+                                │
+                     Evaluation + Diagnostics
+                                │
+                 ┌──────────────┴──────────────┐
+                 │                             │
+             Docker / CI                  Prometheus
+          CodeQL / Dependabot              Metrics
+```
+
+---
 
 ## API
 
-The API exposes interactive OpenAPI documentation at `http://127.0.0.1:8000/docs`. New integrations should use the `/api/v1` namespace. The original `/api` namespace remains available for backward compatibility.
+Interactive OpenAPI documentation is available at:
+
+`http://127.0.0.1:8000/docs`
+
+New integrations should use **`/api/v1`**. The original **`/api`** namespace remains available for backward compatibility.
 
 | Endpoint | Purpose |
 |---|---|
-| POST /api/v1/analyze | Single-molecule analysis |
-| POST /api/v1/compare | Compare two molecules |
-| POST /api/v1/predict-activity | Target-specific activity |
-| POST /api/v1/screen | Synchronous library screening |
-| POST /api/v1/screen/jobs | Asynchronous screening |
-| GET /api/v1/screen/jobs/{job_id} | Screening job status |
-| POST /api/v1/chemical-space | PCA + clustering |
-| POST /api/v1/pareto | Multi-objective Pareto ranking |
-| POST /api/v1/dataset/quality | Dataset QC |
-| POST /api/v1/references/upload | Custom reference library |
-| POST /api/v1/screen/export.csv | Ranked CSV export |
-| POST /api/v1/analyze/report.pdf | Molecular PDF report |
-| GET /api/v1/model-cards | Model metadata and limitations |
-| GET /api/v1/evaluation | Evaluation metadata and validation hierarchy |
-| GET /api/v1/metrics | Prometheus-compatible operational metrics |
-| GET /api/v1/version | Runtime/model provenance |
-| GET /api/v1/health | Health information |
+| `POST /api/v1/analyze` | Single-molecule analysis |
+| `POST /api/v1/compare` | Compare two molecules |
+| `POST /api/v1/predict-activity` | Target-specific activity |
+| `POST /api/v1/screen` | Synchronous screening |
+| `POST /api/v1/screen/jobs` | Asynchronous screening |
+| `GET /api/v1/screen/jobs/{job_id}` | Screening job status |
+| `POST /api/v1/chemical-space` | PCA + clustering |
+| `POST /api/v1/pareto` | Pareto ranking |
+| `POST /api/v1/dataset/quality` | Dataset QC |
+| `POST /api/v1/references/upload` | Reference-library upload |
+| `POST /api/v1/screen/export.csv` | Screening CSV export |
+| `POST /api/v1/analyze/report.pdf` | Molecular PDF report |
+| `GET /api/v1/model-cards` | Model metadata |
+| `GET /api/v1/evaluation` | Evaluation metadata |
+| `GET /api/v1/metrics` | Operational metrics |
+| `GET /api/v1/version` | Runtime/model provenance |
+| `GET /api/v1/health` | Health information |
 
-Example:
+### Example
 
-~~~bash
+```bash
 curl -X POST http://127.0.0.1:8000/api/v1/analyze \
   -H "Content-Type: application/json" \
   -d '{"smiles":"CC(=O)Oc1ccccc1C(=O)O"}'
-~~~
+```
+
+---
 
 ## Screening philosophy
 
-The prioritization number is deliberately labeled a **heuristic candidate-prioritization score**. It combines modeled toxicity, solubility category, QED, reference-space proximity, PAINS status and drug-likeness rules.
+The prioritization number is deliberately labeled a **heuristic candidate-prioritization score**.
+
+It combines computational signals such as modeled toxicity, solubility, QED, reference-space proximity, PAINS status, and drug-likeness rules.
 
 It is **not** a validated efficacy score, clinical risk score, binding-affinity score, developability guarantee, or replacement for experimental testing.
 
-For target-enabled screening, the Pareto layer can consider activity, toxicity, solubility and QED simultaneously rather than hiding every objective behind one number.
+For target-enabled screening, the Pareto layer can consider activity, toxicity, solubility, and QED simultaneously rather than hiding every objective behind one number.
+
+---
 
 ## Uncertainty and applicability domain
 
-DrugAI Lite distinguishes diagnostic signals from calibrated uncertainty.
+DrugAI Lite separates diagnostic signals from calibrated uncertainty.
 
-- **Model agreement:** RF vs Gradient Boosting disagreement.
-- **Empirical ensemble spread:** RF-tree 10th–90th percentile spread.
-- **Applicability-domain signal:** nearest-neighbour Morgan/Tanimoto proximity to the selected reference space.
+| Signal | Interpretation | Not equivalent to |
+|---|---|---|
+| RF/GB agreement | Model-family agreement | Probability of correctness |
+| RF-tree spread | Empirical ensemble spread | Confidence interval |
+| Tanimoto proximity | Similarity to reference space | Formal applicability-domain guarantee |
+| Feature importance | Model explanation | Causal attribution |
+| Local sensitivity | Local model-response diagnostic | Experimental sensitivity |
 
-None of these should be interpreted as a calibrated probability of correctness.
+---
 
-## Evaluation
+## Validation hierarchy
 
-The bundled deployment models include a legacy evaluation snapshot in `backend/models/metrics.json`. Its original split metadata was not retained, so those headline numbers are not presented as a reproducible scaffold-split result. Run `backend/train_models.py` to regenerate the full random/scaffold evaluation artifacts and a fresh model manifest. Target-specific activity is optional: a cloned repository only exposes targets for which trained model artifacts are actually present.
+The project follows a layered validation philosophy:
 
-See [`docs/evaluation.md`](docs/evaluation.md) for the reproducible evaluation contract, metrics guidance and validation hierarchy. The project does **not** claim prospective experimental validation.
-
-Recommended validation hierarchy:
 1. Random benchmark split
-2. Scaffold-disjoint split
+2. Bemis–Murcko scaffold-disjoint split
 3. Temporal split where timestamps are available
 4. Independent external dataset
 5. Prospective experimental validation
 
-## Installation
+The current automated workflow supports the first two.
 
-~~~bash
-git clone https://github.com/Rollins1989/drugai-lite.git
-cd drugai-lite
-python -m venv .venv
-~~~
+The project does **not** claim prospective experimental validation.
 
-Windows:
-~~~text
-.venv\\Scripts\\activate
-~~~
+---
 
-macOS/Linux:
-~~~bash
-source .venv/bin/activate
-~~~
+## Reproducible training
 
-Install and run:
-~~~bash
-cd backend
-python -m pip install -r requirements.txt
-uvicorn main:app --reload
-~~~
+### Solubility and toxicity
 
-Open `http://127.0.0.1:8000`.
-
-### Platform maturity\n- `/api/v1` is the supported versioned API namespace; `/api` is retained as a compatibility surface.\n- `GET /api/v1/evaluation` exposes evaluation metadata and validation boundaries.\n- `GET /api/v1/metrics` exposes Prometheus-compatible request and latency metrics.\n- See [`docs/release-process.md`](docs/release-process.md) and [`CHANGELOG.md`](CHANGELOG.md) for release hygiene.\n\n### Production hardening
-- Runtime dependencies exclude test-only packages (`pytest`, `httpx`); development dependencies are layered separately.
-- Docker runs the application as a non-root user.
-- Uploads are size- and format-limited, screening batches are capped, and asynchronous jobs have bounded active concurrency plus process-local TTL cleanup.
-- Request IDs, processing latency and security response headers are emitted for operational diagnostics.
-- **Important:** async job state and custom reference libraries remain process-local. For multi-worker or multi-instance deployment, replace them with a shared datastore/job queue and add authentication, rate limiting and persistent job history.
-
-### Docker
-~~~bash
-cd backend
-docker build -t drugai-lite .
-docker run --rm -p 8000:8000 drugai-lite
-~~~
-
-## Training
-
-Solubility and toxicity:
-~~~bash
+```bash
 cd backend
 python train_models.py
-~~~
+```
 
-Target activity (optional; downloads current ChEMBL data and creates a target model bundle):
-~~~bash
+The pipeline records dataset hashes and generates evaluation/model artifacts.
+
+### Optional target activity
+
+```bash
+cd backend
 python train_target_activity.py --target CHEMBL203 --name egfr
-~~~
+```
 
-The EGFR/CHEMBL203 training pipeline is included, but no target model is treated as bundled unless `backend/models/targets/<name>/` contains the required artifacts. The UI/API therefore report zero available targets rather than advertising an unavailable EGFR model.
+The target pipeline can retrieve current ChEMBL data, train a target-specific model, and record retrieval/query metadata and dataset hashes.
 
-The target pipeline records ChEMBL retrieval/query metadata and dataset hashes so refreshed training runs are auditable.
+**Important:** the presence of the training pipeline does not mean an EGFR model is bundled.
 
-## Scientific methodology
+Targets are exposed only when trained artifacts exist under:
 
-See [`docs/scientific-methodology.md`](docs/scientific-methodology.md) for the model inputs, validation hierarchy, chemical-space interpretation, sensitivity methodology and scientific boundaries.
+```text
+backend/models/targets/<name>/
+```
+
+---
 
 ## Scientific limitations
+
+DrugAI Lite is intentionally conservative about what its models can establish.
+
 - Tox21 NR-AR is one assay endpoint and must not be generalized to overall human toxicity.
-- pIC50 predictions are computational estimates, not experimental activity measurements.
-- RF/GB agreement and RF-tree spread are diagnostic signals, not calibrated confidence intervals.
-- Nearest-neighbour chemical-space proximity is not a formal statistical applicability-domain guarantee.
-- Global feature importance and local ±1 training-standard-deviation sensitivity are explanatory diagnostics, not causal attribution.
+- pIC50 values are computational estimates, not experimental measurements.
+- RF/GB agreement and RF-tree spread are diagnostic signals, not calibrated uncertainty.
+- Nearest-neighbour similarity is not a formal statistical applicability-domain guarantee.
+- Feature importance and local sensitivity are explanatory diagnostics, not causal evidence.
 - The candidate-prioritization score is hand-weighted and unvalidated.
 - ChEMBL measurements can contain assay and experimental heterogeneity.
 - Models can fail outside their training distribution.
+- Computational prioritization does not establish biological efficacy, safety, pharmacokinetics, or clinical utility.
 - Experimental validation remains necessary for biological conclusions.
 
-## Version
-**Application: 4.0.0**  
-**Bundled model bundle: 3.1.0 (explicitly tracked in `backend/models/model_version.json`)**  
-**Software citation: `CITATION.cff`**
+---
+
+## Installation
+
+### Requirements
+
+- Python 3.12+
+- Git
+- Docker (optional)
+
+### Local setup
+
+```bash
+git clone https://github.com/Rollins1989/drugai-lite.git
+cd drugai-lite
+python -m venv .venv
+```
+
+#### Windows
+
+```powershell
+.venv\Scripts\activate
+```
+
+#### macOS / Linux
+
+```bash
+source .venv/bin/activate
+```
+
+Install and run:
+
+```bash
+cd backend
+python -m pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+## Docker
+
+```bash
+cd backend
+docker build -t drugai-lite .
+docker run --rm -p 8000:8000 drugai-lite
+```
+
+---
+
+## Development
+
+Install development dependencies:
+
+```bash
+cd backend
+python -m pip install -r requirements-dev.txt
+```
+
+Run tests:
+
+```bash
+pytest -q
+```
+
+Run Ruff:
+
+```bash
+ruff check .
+```
+
+Compile-check:
+
+```bash
+python -m compileall .
+```
+
+CI validates dependency consistency, linting, compilation, tests/coverage, and Docker build/smoke behaviour.
+
+Security automation includes CodeQL and Dependabot.
+
+---
+
+## Production engineering
+
+### API versioning
+
+- `/api/v1` is the supported versioned API.
+- `/api` is retained as a compatibility surface.
+- OpenAPI operation IDs are unique across both registrations.
+
+### Observability
+
+`GET /api/v1/metrics` exposes Prometheus-compatible request and latency metrics.
+
+Metrics use normalized route paths rather than raw job IDs to avoid unnecessary label cardinality.
+
+### Async screening
+
+The screening service includes:
+
+- batch-size limits
+- bounded active jobs
+- TTL cleanup
+- input-format validation
+- explicit job lifecycle/status
+
+Job state and custom reference libraries are currently **process-local**. Multi-worker or multi-instance deployment should replace these with shared persistent infrastructure and add authentication/rate limiting.
+
+### Container security
+
+Docker runs the application as a non-root user and includes a healthcheck.
+
+---
+
+## Repository structure
+
+```text
+drugai-lite/
+├── .github/workflows/
+│   ├── ci.yml
+│   ├── security.yml
+│   └── release.yml
+├── backend/
+│   ├── api/routes.py
+│   ├── models/
+│   ├── tests/
+│   ├── analytics.py
+│   ├── chemistry.py
+│   ├── config.py
+│   ├── main.py
+│   ├── model_service.py
+│   ├── schemas.py
+│   ├── services.py
+│   ├── train_models.py
+│   ├── train_target_activity.py
+│   └── requirements*.txt
+├── docs/
+│   ├── evaluation.md
+│   ├── scientific-methodology.md
+│   └── release-process.md
+├── CHANGELOG.md
+├── CITATION.cff
+├── LICENSE
+└── README.md
+```
+
+---
+
+## Documentation
+
+| Document | Purpose |
+|---|---|
+| [Scientific methodology](docs/scientific-methodology.md) | Methods, diagnostics, chemical-space interpretation, limitations |
+| [Evaluation](docs/evaluation.md) | Reproducible evaluation and validation contract |
+| [Release process](docs/release-process.md) | Release and deployment guidance |
+| [Changelog](CHANGELOG.md) | Version history |
+| [Citation](CITATION.cff) | Software citation metadata |
+
+---
+
+## Versioning
+
+**Application:** `4.0.0`  
+**Bundled model bundle:** `3.1.0`
+
+Model manifest: [`backend/models/model_version.json`](backend/models/model_version.json)
+
+---
+
+## Roadmap
+
+Potential future platform work:
+
+- persistent experiment history
+- shared distributed screening jobs
+- Redis/Celery or equivalent queue infrastructure
+- PostgreSQL-backed state
+- authentication and authorization
+- rate limiting
+- user-isolated reference libraries
+- model registry/version management
+- independent external validation datasets
+- calibrated uncertainty methods
+- expanded target-specific model bundles
+- experiment tracking and audit trails
+
+These are future directions, not current capabilities.
+
+---
+
+## Contributing
+
+Contributions, scientific review, reproducibility improvements, bug reports, and engineering feedback are welcome.
+
+Before opening a pull request:
+
+1. Run the test suite.
+2. Run Ruff.
+3. Confirm documentation matches implementation.
+4. Avoid unsupported scientific claims.
+5. Keep model limitations explicit.
+
+---
 
 ## License
-MIT License. See LICENSE.
+
+Released under the **MIT License**. See [`LICENSE`](LICENSE).
+
+## Citation
+
+If you use DrugAI Lite in research, teaching, experimentation, or derivative work, see [`CITATION.cff`](CITATION.cff).
+
+---
+
+**Computational predictions are hypotheses. Experimental validation remains the final authority.**
