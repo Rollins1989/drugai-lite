@@ -8,3 +8,5 @@ venv/
 .git/
 .gitignore
 *.ipynb_checkpoints/
+data/*
+evaluation/
