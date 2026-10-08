@@ -26,8 +26,9 @@ async def request_metadata(request:Request,call_next):
     response.headers["X-Request-ID"]=request_id
     elapsed=time.perf_counter()-start
     response.headers["X-Process-Time-Ms"]=str(round(elapsed*1000,2))
-    REQUEST_COUNT.labels(request.method,request.url.path,str(response.status_code)).inc()
-    REQUEST_LATENCY.labels(request.method,request.url.path).observe(elapsed)
+    metric_path=getattr(request.scope.get("route"),"path",request.url.path)
+    REQUEST_COUNT.labels(request.method,metric_path,str(response.status_code)).inc()
+    REQUEST_LATENCY.labels(request.method,metric_path).observe(elapsed)
     response.headers["X-Content-Type-Options"]="nosniff"
     response.headers["X-Frame-Options"]="DENY"
     response.headers["Referrer-Policy"]="strict-origin-when-cross-origin"
