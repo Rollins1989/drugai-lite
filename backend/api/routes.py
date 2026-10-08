@@ -9,7 +9,7 @@ from config import APP_VERSION, MAX_UPLOAD_BYTES
 from model_service import METRICS, MODEL_VERSION, TARGET_MODELS
 from schemas import ActivityRequest, ChemicalSpaceRequest, CompareRequest, MoleculeRequest, ParetoRequest
 from services import full_analysis, parse_uploaded_records, screen_records, start_screen_job, get_screen_job
-from analytics import chemical_space, dataset_quality, pairwise_similarity
+from analytics import chemical_space, dataset_quality, pairwise_similarity, pareto_rank
 from provenance import runtime_provenance
 from reports import molecule_pdf
 
